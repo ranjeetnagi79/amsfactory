@@ -187,7 +187,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--fact-a)}
 <nav id="nav">
   <div id="nav-header">
     <h2>AMS Factory v4.0</h2>
-    <p>CEE RES · BASF Pilot · 199.5 FTE</p>
+    <p>CEE RES · Pilot · 199.5 FTE</p>
   </div>
   <div class="nav-group">
     <div class="nav-group-title">Factory</div>
@@ -210,10 +210,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--fact-a)}
       <span class="dot" style="background:#EF4444"></span>EC AMS
     </div>
     <div class="nav-item dl-color" data-sec="monterey" onclick="nav('monterey')">
-      <span class="dot" style="background:#EF4444"></span>BASF Monterey AO
+      <span class="dot" style="background:#EF4444"></span>Monterey AO
     </div>
     <div class="nav-item dl-color" data-sec="basf-ap" onclick="nav('basf-ap')">
-      <span class="dot" style="background:#EF4444"></span>BASF AP AgroChem
+      <span class="dot" style="background:#EF4444"></span>
+    AgroChem
     </div>
   </div>
   <div class="nav-group">
@@ -272,9 +273,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--fact-a)}
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const SECTIONS = {
   'factory':        {title:'AMS Factory — Command Centre', api:'/api/summary', render:renderFactory},
-  'ec-ams':         {title:'Delivery Cell — EC AMS',        api:'/api/account/DL_EC_AMS', render:(d)=>renderAccount('DL_EC_AMS','EC AMS (BASF Coatings)','dl',d)},
-  'monterey':       {title:'Delivery Cell — BASF Monterey AO', api:'/api/account/DL_MONTEREY', render:(d)=>renderAccount('DL_MONTEREY','BASF Monterey AO (Precious Metals)','dl',d)},
-  'basf-ap':        {title:'Delivery Cell — BASF AP AgroChem', api:'/api/account/DL_BASF_AP', render:(d)=>renderAccount('DL_BASF_AP','BASF AP / AgroChem AMS','dl',d)},
+  'ec-ams':         {title:'Delivery Cell — EC AMS',        api:'/api/account/DL_EC_AMS', render:(d)=>renderAccount('DL_EC_AMS','EC AMS','dl',d)},
+  'monterey':       {title:'Delivery Cell — Monterey AO', api:'/api/account/DL_MONTEREY', render:(d)=>renderAccount('DL_MONTEREY','Monterey AO','dl',d)},
+  'basf-ap':        {title:'Delivery Cell — AgroChem', api:'/api/account/DL_BASF_AP', render:(d)=>renderAccount('DL_BASF_AP','AgroChem AMS','dl',d)},
   'pod-r2r':        {title:'POD — Record to Report (R2R)',   api:'/api/pod/POD_R2R', render:(d)=>renderPOD('POD_R2R','R2R — Record to Report / Finance & Controlling','ManojKumar Gautam',d)},
   'pod-otc':        {title:'POD — Order to Cash (OTC)',      api:'/api/pod/POD_OTC', render:(d)=>renderPOD('POD_OTC','OTC — Order to Cash & Foreign Trade','Ameet Sule',d)},
   'pod-p2p':        {title:'POD — Procure to Pay (P2P)',     api:'/api/pod/POD_P2P', render:(d)=>renderPOD('POD_P2P','P2P — Procure to Pay / Warehousing','Shashikant Nivate',d)},
