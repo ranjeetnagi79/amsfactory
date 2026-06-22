@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AMS Factory Management</title>
+<style>
+:root{--fact:#0D3B5E;--fact-a:#00D4FF;--dl:#5C1219;--dl-a:#EF4444;
+  --pod:#0A2E5C;--pod-a:#0288D1;--twr:#2D1B69;--twr-a:#7B1FA2;
+  --bg:#0A1628;--surface:#111E32;--surface2:#162237;--border:#1E3251;
+  --text:#E2E8F0;--text2:#94A3B8;--green:#22C55E;--amber:#F59E0B;--red:#EF4444;
+  --nav-w:220px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);
+  display:flex;height:100vh;overflow:hidden;font-size:13px}
+
+/* NAV */
+#nav{width:var(--nav-w);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+#nav-header{padding:14px 12px;border-bottom:1px solid var(--border)}
+#nav-header h2{font-size:11px;color:var(--fact-a);text-transform:uppercase;letter-spacing:1px}
+#nav-header p{font-size:10px;color:var(--text2);margin-top:2px}
+.nav-group{padding:8px 0}
+.nav-group-title{padding:4px 14px;font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;color:var(--text2)}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;
+  font-size:11px;color:var(--text2);border-left:3px solid transparent;
+  transition:all .15s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav-item.active{color:var(--text);border-left-color:currentColor;
+  background:rgba(255,255,255,.06)}
+.nav-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.nav-item.fact-color{color:#4DB8D8}.nav-item.fact-color.active{color:var(--fact-a)}
+.nav-item.dl-color{color:#F87171}.nav-item.dl-color.active{color:var(--dl-a)}
+.nav-item.pod-color{color:#60A5FA}.nav-item.pod-color.active{color:var(--pod-a)}
+.nav-item.twr-color{color:#C084FC}.nav-item.twr-color.active{color:var(--twr-a)}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:8px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#topbar h1{font-size:13px;font-weight:600;color:var(--text)}
+#topbar-right{display:flex;align-items:center;gap:12px}
+#clock{font-size:11px;color:var(--text2)}
+#export-btn{padding:5px 12px;background:var(--fact);color:var(--fact-a);
+  border:1px solid var(--fact-a);border-radius:4px;font-size:11px;cursor:pointer}
+#export-btn:hover{background:var(--fact-a);color:var(--fact)}
+
+#content{flex:1;overflow-y:auto;padding:20px}
+
+/* SECTION HEADER */
+.sec-header{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.sec-header h2{font-size:16px;font-weight:700;margin-bottom:3px}
+.sec-header p{font-size:11px;color:var(--text2)}
+.sec-header.fact h2{color:var(--fact-a)}
+.sec-header.dl h2{color:var(--dl-a)}
+.sec-header.pod h2{color:var(--pod-a)}
+.sec-header.twr h2{color:var(--twr-a)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;
+  border-top:3px solid var(--border)}
+.kpi.fact{border-top-color:var(--fact-a)}
+.kpi.dl{border-top-color:var(--dl-a)}
+.kpi.pod{border-top-color:var(--pod-a)}
+.kpi.twr{border-top-color:var(--twr-a)}
+.kpi.rag-red{border-top-color:var(--red)}
+.kpi.rag-amber{border-top-color:var(--amber)}
+.kpi.rag-green{border-top-color:var(--green)}
+.kpi-value{font-size:22px;font-weight:700;line-height:1.2}
+.kpi-label{font-size:10px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.kpi-sub{font-size:10px;color:var(--text2);margin-top:4px}
+
+/* BLOCKS */
+.block{background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  margin-bottom:16px;overflow:hidden}
+.block-title{padding:9px 14px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.block-title.fact{background:rgba(13,59,94,.5);color:var(--fact-a)}
+.block-title.dl{background:rgba(92,18,25,.5);color:var(--dl-a)}
+.block-title.pod{background:rgba(10,46,92,.5);color:var(--pod-a)}
+.block-title.twr{background:rgba(45,27,105,.5);color:var(--twr-a)}
+.block-body{padding:12px 14px}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:7px 8px;text-align:left;background:rgba(255,255,255,.04);
+  color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+td.center{text-align:center}
+td[contenteditable="true"]{background:rgba(255,253,200,.07);cursor:text;
+  outline:none;border-radius:2px}
+td[contenteditable="true"]:focus{background:rgba(255,253,200,.15);
+  box-shadow:inset 0 0 0 1px var(--amber)}
+.tot-row td{font-weight:700;background:rgba(255,255,255,.04);border-top:1px solid var(--border)}
+
+/* RAG */
+.rag-red{color:var(--red)}.rag-amber{color:var(--amber)}.rag-green{color:var(--green)}
+.rag-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.rag-pill.red{background:rgba(239,68,68,.15);color:var(--red)}
+.rag-pill.amber{background:rgba(245,158,11,.15);color:var(--amber)}
+.rag-pill.green{background:rgba(34,197,94,.15);color:var(--green)}
+
+/* BUTTONS */
+.btn{padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;border:none}
+.btn-fact{background:var(--fact);color:var(--fact-a);border:1px solid var(--fact-a)}
+.btn-dl{background:var(--dl);color:var(--dl-a);border:1px solid var(--dl-a)}
+.btn-pod{background:var(--pod);color:var(--pod-a);border:1px solid var(--pod-a)}
+.btn-twr{background:var(--twr);color:var(--twr-a);border:1px solid var(--twr-a)}
+.btn:hover{opacity:.8}
+.btn-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+
+/* MODAL */
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;
+  align-items:center;justify-content:center}
+#modal-bg.open{display:flex}
+#modal{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:20px;min-width:400px;max-width:560px;width:100%}
+#modal h3{font-size:14px;margin-bottom:14px;color:var(--fact-a)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row.full{grid-template-columns:1fr}
+label{font-size:10px;color:var(--text2);display:block;margin-bottom:3px}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);padding:6px 8px;border-radius:4px;font-size:11px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--fact-a)}
+.modal-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:#1E3A5F;border:1px solid var(--fact-a);
+  color:var(--fact-a);padding:8px 16px;border-radius:6px;font-size:11px;
+  transform:translateY(60px);opacity:0;transition:all .3s;z-index:200}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.err{background:#3B0A10;border-color:var(--red);color:var(--red)}
+
+/* LOADING */
+.loading{padding:40px;text-align:center;color:var(--text2);font-size:12px}
+
+/* FLOW */
+.flow-svg{max-width:100%;height:auto}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.info-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px}
+.info-card h4{font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase}
+.info-card p{font-size:12px}
+.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin:1px}
+.badge.human{background:rgba(2,136,209,.2);color:#60A5FA}
+.badge.agent{background:rgba(123,31,162,.2);color:#C084FC}
+
+/* SIMULATION MODE */
+#sim-btn{padding:5px 14px;background:var(--twr);color:#C084FC;border:1px solid #C084FC;
+  border-radius:4px;font-size:11px;cursor:pointer;font-weight:600;transition:all .2s}
+#sim-btn.on{background:#C084FC;color:var(--bg);border-color:#C084FC}
+.sim-bar{background:rgba(123,31,162,.12);border:1px solid rgba(123,31,162,.4);
+  border-radius:6px;padding:10px 14px;margin-bottom:16px;display:none;
+  gap:10px;align-items:center;flex-wrap:wrap}
+.sim-bar.show{display:flex}
+.sim-bar span{font-size:11px;color:#C084FC;flex:1}
+[data-sim-changed]{background:rgba(123,31,162,.15)!important;
+  outline:1px solid rgba(123,31,162,.5)!important}
+.sim-delta{font-size:9px;color:#C084FC;margin-left:4px;font-style:italic}
+.sim-panel{background:rgba(123,31,162,.07);border:1px solid rgba(123,31,162,.25);
+  border-radius:6px;padding:12px 14px;margin-bottom:16px}
+.sim-panel h4{font-size:11px;color:#C084FC;margin-bottom:10px;text-transform:uppercase;
+  letter-spacing:.5px;font-weight:700}
+.sim-compare{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.sim-ccard{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px 10px}
+.sim-ccard .sc-lbl{font-size:9px;color:var(--text2);text-transform:uppercase;margin-bottom:4px}
+.sim-ccard .sc-base{font-size:10px;color:var(--text2);text-decoration:line-through}
+.sim-ccard .sc-new{font-size:17px;font-weight:700}
+.sim-ccard .sc-chg{font-size:10px;margin-top:2px}
+
+/* RESOURCE EDITING */
+.row-actions{display:flex;gap:4px;justify-content:flex-end}
+.row-btn{background:none;border:none;cursor:pointer;padding:2px 5px;border-radius:3px;font-size:11px;opacity:.6}
+.row-btn:hover{opacity:1;background:rgba(255,255,255,.08)}
+.row-btn.edit{color:var(--fact-a)}
+.row-btn.del{color:var(--red)}
+
+/* SECTION TABS */
+.sec-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.sec-tab{padding:7px 14px;font-size:11px;cursor:pointer;color:var(--text2);
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;user-select:none}
+.sec-tab:hover{color:var(--text)}
+.sec-tab.active{color:var(--text);border-bottom-color:currentColor}
+.sec-tab.dl.active{color:var(--dl-a)}.sec-tab.pod.active{color:var(--pod-a)}.sec-tab.twr.active{color:var(--twr-a)}.sec-tab.fact.active{color:var(--fact-a)}
+.sec-pane{display:none}.sec-pane.active{display:block}
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.chart-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px}
+.chart-card h4{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:700}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chart-legend span{font-size:10px;display:flex;align-items:center;gap:4px;color:var(--text2)}
+.chart-legend .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* UPLOAD */
+.upload-zone{border:1px dashed var(--border);border-radius:4px;padding:8px 12px;
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;transition:border-color .2s}
+.upload-zone:hover{border-color:var(--fact-a)}
+.upload-zone input[type=file]{display:none}
+.upload-zone .up-icon{color:var(--fact-a)}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav id="nav">
+  <div id="nav-header">
+    <h2>AMS Factory v4.0</h2>
+    <p>AMS Team · Pilot · 199.5 FTE</p>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Factory</div>
+    <div class="nav-item fact-color active" data-sec="factory" onclick="nav('factory')">
+      <span class="dot" style="background:#00D4FF"></span>Command Centre
+    </div>
+    <div class="nav-item fact-color" data-sec="resources" onclick="nav('resources')">
+      <span class="dot" style="background:#00D4FF"></span>Resource Master
+    </div>
+    <div class="nav-item fact-color" data-sec="rebalancing" onclick="nav('rebalancing')">
+      <span class="dot" style="background:#00D4FF"></span>Rebalancing Board
+    </div>
+    <div class="nav-item fact-color" data-sec="flow" onclick="nav('flow')">
+      <span class="dot" style="background:#00D4FF"></span>E2E Process Flow
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Delivery Cells</div>
+    <div class="nav-item dl-color" data-sec="account-a" onclick="nav('account-a')">
+      <span class="dot" style="background:#EF4444"></span>Account Alpha
+    </div>
+    <div class="nav-item dl-color" data-sec="account-b" onclick="nav('account-b')">
+      <span class="dot" style="background:#EF4444"></span>Account Beta
+    </div>
+    <div class="nav-item dl-color" data-sec="account-c" onclick="nav('account-c')">
+      <span class="dot" style="background:#EF4444"></span>Account Gamma
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">POD Leads</div>
+    <div class="nav-item pod-color" data-sec="pod-r2r" onclick="nav('pod-r2r')"><span class="dot" style="background:#0288D1"></span>R2R</div>
+    <div class="nav-item pod-color" data-sec="pod-otc" onclick="nav('pod-otc')"><span class="dot" style="background:#0288D1"></span>OTC</div>
+    <div class="nav-item pod-color" data-sec="pod-p2p" onclick="nav('pod-p2p')"><span class="dot" style="background:#0288D1"></span>P2P</div>
+    <div class="nav-item pod-color" data-sec="pod-mfg" onclick="nav('pod-mfg')"><span class="dot" style="background:#0288D1"></span>MFG</div>
+    <div class="nav-item pod-color" data-sec="pod-hcm" onclick="nav('pod-hcm')"><span class="dot" style="background:#0288D1"></span>HCM</div>
+    <div class="nav-item pod-color" data-sec="pod-ehs" onclick="nav('pod-ehs')"><span class="dot" style="background:#0288D1"></span>EHS</div>
+    <div class="nav-item pod-color" data-sec="pod-reporting" onclick="nav('pod-reporting')"><span class="dot" style="background:#0288D1"></span>Reporting</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Tower Leads</div>
+    <div class="nav-item twr-color" data-sec="twr-abap" onclick="nav('twr-abap')"><span class="dot" style="background:#7B1FA2"></span>ABAP/UI5</div>
+    <div class="nav-item twr-color" data-sec="twr-basis" onclick="nav('twr-basis')"><span class="dot" style="background:#7B1FA2"></span>Basis</div>
+    <div class="nav-item twr-color" data-sec="twr-security" onclick="nav('twr-security')"><span class="dot" style="background:#7B1FA2"></span>Security/GRC</div>
+    <div class="nav-item twr-color" data-sec="twr-integration" onclick="nav('twr-integration')"><span class="dot" style="background:#7B1FA2"></span>Integration/BTP</div>
+    <div class="nav-item twr-color" data-sec="twr-automation" onclick="nav('twr-automation')"><span class="dot" style="background:#7B1FA2"></span>Automation/AIOps</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <h1 id="page-title">AMS Factory — Command Centre</h1>
+    <div id="topbar-right">
+      <span id="clock"></span>
+      <button id="sim-btn" onclick="toggleSim()">Simulate</button>
+      <button id="export-btn" onclick="exportExcel()">Export Excel</button>
+    </div>
+  </div>
+  <div id="sim-bar" class="sim-bar" style="margin:0 20px">
+    <span>Simulation Mode Active — all edits are computed locally and NOT saved to the database</span>
+    <button class="btn btn-twr" style="font-size:10px;padding:3px 10px" onclick="resetSim()">Reset</button>
+    <button class="btn btn-fact" style="font-size:10px;padding:3px 10px" onclick="applySim()">Apply to DB</button>
+  </div>
+  <div id="content"><div class="loading">Loading…</div></div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-bg" onclick="closeModal(event)">
+  <div id="modal">
+    <h3 id="modal-title">Add Requirement</h3>
+    <div id="modal-body"></div>
+    <div class="modal-btns">
+      <button class="btn btn-fact" onclick="submitModal()">Submit</button>
+      <button class="btn" style="background:var(--surface2);color:var(--text2)" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+const SECTIONS = {
+  'factory':        {title:'AMS Factory — Command Centre', api:'/api/summary', render:renderFactory},
+  'account-a':      {title:'Delivery Cell — Account Alpha',        api:'/api/account/DL_ACCOUNT_A', render:(d)=>renderAccount('DL_ACCOUNT_A','Account Alpha — Core ERP','dl',d)},
+  'account-b':      {title:'Delivery Cell — Account Beta',         api:'/api/account/DL_ACCOUNT_B', render:(d)=>renderAccount('DL_ACCOUNT_B','Account Beta — Metals & AO','dl',d)},
+  'account-c':      {title:'Delivery Cell — Account Gamma',        api:'/api/account/DL_ACCOUNT_C', render:(d)=>renderAccount('DL_ACCOUNT_C','Account Gamma — Process Industries','dl',d)},
+  'pod-r2r':        {title:'POD — Record to Report (R2R)',   api:'/api/pod/POD_R2R', render:(d)=>renderPOD('POD_R2R','R2R — Record to Report / Finance & Controlling','Arun Sharma',d)},
+  'pod-otc':        {title:'POD — Order to Cash (OTC)',      api:'/api/pod/POD_OTC', render:(d)=>renderPOD('POD_OTC','OTC — Order to Cash & Foreign Trade','Priya Nair',d)},
+  'pod-p2p':        {title:'POD — Procure to Pay (P2P)',     api:'/api/pod/POD_P2P', render:(d)=>renderPOD('POD_P2P','P2P — Procure to Pay / Warehousing','Vikram Singh',d)},
+  'pod-mfg':        {title:'POD — Manufacturing (MFG)',      api:'/api/pod/POD_MFG', render:(d)=>renderPOD('POD_MFG','MFG — Manufacturing, Plant Maint & Quality','Anjali Patel',d)},
+  'pod-hcm':        {title:'POD — HCM',                     api:'/api/pod/POD_HCM', render:(d)=>renderPOD('POD_HCM','HCM — Payroll / SuccessFactors','Rahul Gupta',d)},
+  'pod-ehs':        {title:'POD — EHS',                     api:'/api/pod/POD_EHS', render:(d)=>renderPOD('POD_EHS','EHS — Product Compliance & Industry','Sonal Reddy',d)},
+  'pod-reporting':  {title:'POD — Reporting & Analytics',   api:'/api/pod/POD_REPORTING', render:(d)=>renderPOD('POD_REPORTING','Reporting — BW / BTP / SAC / Power BI','Deepak Verma',d)},
+  'twr-abap':       {title:'Tower — ABAP/UI5',              api:'/api/tower/TWR_ABAP', render:(d)=>renderTower('TWR_ABAP','ABAP / Fiori / UI5 Engineering','Rohan Iyer',214,d)},
+  'twr-basis':      {title:'Tower — Basis',                 api:'/api/tower/TWR_BASIS', render:(d)=>renderTower('TWR_BASIS','SAP Basis & Platforms','TBD',23,d)},
+  'twr-security':   {title:'Tower — Security/GRC',          api:'/api/tower/TWR_SECURITY', render:(d)=>renderTower('TWR_SECURITY','SAP Security / GRC','Kavita Menon',36,d)},
+  'twr-integration':{title:'Tower — Integration/BTP',       api:'/api/tower/TWR_INTEGRATION', render:(d)=>renderTower('TWR_INTEGRATION','Integration / BTP / Middleware','Suresh Kumar',29,d)},
+  'twr-automation': {title:'Tower — Automation/AIOps',      api:'/api/tower/TWR_AUTOMATION', render:(d)=>renderTower('TWR_AUTOMATION','Automation / Agentic AI / AIOps','Ravi Bhat',12,d)},
+  'resources':      {title:'Resource Master',               api:'/api/resources', render:renderResources},
+  'rebalancing':    {title:'Rebalancing Board',             api:'/api/rebalancing', render:renderRebalancing},
+  'flow':           {title:'E2E Process Flow',              api:null, render:renderFlow},
+};
+
+// ── STATE & NAVIGATION ────────────────────────────────────────────────────────
+let STATE = {sec:'factory', modal:null, data:null};
+
+// Simulation state
+const SIM = {
+  active: false,
+  rowData: {},   // mid => { all current simulated field values }
+  baseData: {},  // mid => { all original field values from API }
+  rowType: {},   // mid => 'dl' | 'pod' | 'tower'
+  pending: new Set()
+};
+
+async function nav(id) {
+  if (!SECTIONS[id]) return;
+  STATE.sec = id;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.sec === id);
+  });
+  document.getElementById('page-title').textContent = SECTIONS[id].title;
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const data = SECTIONS[id].api ? await apiFetch(SECTIONS[id].api) : null;
+    STATE.data = data;
+    if (SIM.active) initSimBaseline(data);
+    content.innerHTML = SECTIONS[id].render(data);
+    if (SIM.active) injectSimPanel();
+    initEditables();
+    initLazyPanes();
+  } catch(e) {
+    content.innerHTML = `<div class="loading" style="color:var(--red)">Error loading section: ${e.message}</div>`;
+  }
+}
+
+// ── API HELPERS ───────────────────────────────────────────────────────────────
+async function apiFetch(url, method='GET', body=null) {
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+async function exportExcel() {
+  window.open('/api/export','_blank');
+  toast('Downloading Excel export…');
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, isErr=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isErr?' err':'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.className='', 2500);
+}
+
+// ── INLINE EDITING ────────────────────────────────────────────────────────────
+function initEditables() {
+  document.querySelectorAll('[data-ep]').forEach(td => {
+    td.contentEditable = 'true';
+    td.addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();td.blur();} });
+    td.addEventListener('focus', function() {
+      if (this.dataset.pct) {
+        const raw = parseFloat(this.dataset.rawval||'0');
+        this.textContent = raw.toFixed(2);
+      }
+    });
+    td.addEventListener('blur', async function() {
+      const ep    = this.dataset.ep;
+      const field = this.dataset.field;
+      let val;
+      if (this.dataset.istext) {
+        val = this.textContent.trim();
+      } else if (this.dataset.pct) {
+        const raw = parseFloat(this.textContent.replace('%','')) || 0;
+        val = raw > 1 ? raw / 100 : raw;
+      } else {
+        val = parseFloat(this.textContent) || 0;
+      }
+
+      if (SIM.active) {
+        // ── SIM MODE: compute locally, do NOT call API ──────────────────────
+        const mid = parseInt(ep.match(/\/(\d+)$/)?.[1] || '0');
+        if (!SIM.rowData[mid]) SIM.rowData[mid] = {};
+        SIM.rowData[mid][field] = val;
+        SIM.pending.add(mid);
+        // Build full row from stored base + all current sim edits
+        const merged = {...(SIM.baseData[mid]||{}), ...SIM.rowData[mid]};
+        // Fill any missing fields from DOM
+        this.closest('tr')?.querySelectorAll('[data-ep],[data-calc]').forEach(cell => {
+          const f = cell.dataset.field||cell.dataset.calc;
+          if (f && merged[f] === undefined) {
+            const v = parseFloat(cell.textContent);
+            merged[f] = isNaN(v) ? (cell.textContent.trim()||0) : v;
+          }
+        });
+        const type = SIM.rowType[mid] || 'dl';
+        const updated = computeLocal(type, merged);
+        // Refresh display for pct fields
+        if (this.dataset.pct) {
+          this.dataset.rawval = String(val);
+          this.textContent = (val*100).toFixed(0)+'%';
+        }
+        this.setAttribute('data-sim-changed','1');
+        const row = this.closest('tr');
+        if (row) updateRowCalcs(row, updated);
+        updateSimPanel();
+        toast('Simulated — not saved to DB');
+      } else {
+        // ── NORMAL MODE: save to DB ─────────────────────────────────────────
+        try {
+          const updated = await apiFetch(ep, 'PATCH', {[field]: val});
+          if (this.dataset.pct) {
+            this.dataset.rawval = String(updated[field]||val);
+            this.textContent = ((updated[field]||val)*100).toFixed(0)+'%';
+          }
+          const row = this.closest('tr');
+          if (row) updateRowCalcs(row, updated);
+          toast('Saved');
+        } catch(e) { toast('Save failed', true); }
+      }
+    });
+  });
+}
+
+// ── LOCAL COMPUTE (mirrors Python backend — no API call needed) ───────────────
+function computeLocal(type, row) {
+  const r = n => Math.round(n*10)/10;
+  if (type === 'dl') {
+    const h = ((row.inc_mo*row.inc_h + row.sr_mo*row.sr_h +
+                row.cr_mo*row.cr_h + (row.nt_hrs||0)) *
+               row.cplx * (1 - row.ai_pct));
+    const d = r(h/160), c = r(row.alloc_fte*row.avail_pct*row.skill_fit), g = r(d-c);
+    return {...row, demand_hrs:r(h), demand_fte:d, cap_fte:c, gap_fte:g,
+            rag: g>2?'red':g>0?'amber':'green'};
+  }
+  if (type === 'pod') {
+    const h = ((row.inc_mo*1.5 + row.sr_mo*2.5 +
+                row.cr_mo*8.0 + (row.nt_hrs||0)) *
+               row.cplx * (1 - row.ai_pct));
+    const d = r(h/160), c = r(row.alloc_fte*0.85), g = r(d-c);
+    return {...row, demand_fte:d, cap_fte:c, gap_fte:g,
+            rag: g>2?'red':g>0?'amber':'green'};
+  }
+  if (type === 'tower') {
+    const c = row.ready_fte, d = row.demand_fte, g = r(d-c);
+    const cov = row.target_fte ? r(c/row.target_fte*100) : 0;
+    return {...row, cap_fte:c, gap_fte:g, coverage_pct:cov,
+            rag: g>1?'red':g>0?'amber':'green'};
+  }
+  return row;
+}
+
+// ── SIMULATION FUNCTIONS ──────────────────────────────────────────────────────
+function initSimBaseline(data) {
+  SIM.rowData = {}; SIM.baseData = {}; SIM.rowType = {}; SIM.pending.clear();
+  if (!data) return;
+  const rows = data.modules || data.skills || [];
+  rows.forEach(m => {
+    const id = m.id;
+    SIM.baseData[id] = {...m};
+    SIM.rowData[id]  = {...m};
+    // Detect type from data shape
+    if ('demand_hrs' in m)     SIM.rowType[id] = 'dl';
+    else if ('coverage_pct' in m) SIM.rowType[id] = 'tower';
+    else                          SIM.rowType[id] = 'pod';
+  });
+}
+
+function toggleSim() {
+  SIM.active = !SIM.active;
+  const btn = document.getElementById('sim-btn');
+  const bar = document.getElementById('sim-bar');
+  if (SIM.active) {
+    btn.textContent = 'Exit Simulate'; btn.classList.add('on');
+    bar.classList.add('show');
+  } else {
+    btn.textContent = 'Simulate'; btn.classList.remove('on');
+    bar.classList.remove('show');
+    SIM.rowData={}; SIM.baseData={}; SIM.rowType={}; SIM.pending.clear();
+  }
+  nav(STATE.sec);
+}
+
+function resetSim() {
+  SIM.rowData={}; SIM.baseData={}; SIM.rowType={}; SIM.pending.clear();
+  nav(STATE.sec);
+  toast('Simulation reset — showing original data');
+}
+
+async function applySim() {
+  if (!SIM.pending.size) { toast('No simulation changes to apply'); return; }
+  let saved = 0, failed = 0;
+  for (const mid of SIM.pending) {
+    const type = SIM.rowType[mid];
+    const changes = SIM.rowData[mid];
+    if (!changes || !type) continue;
+    const epMap = {dl:`/api/module/${mid}`, pod:`/api/pod_module/${mid}`, tower:`/api/tower_skill/${mid}`};
+    const ep = epMap[type];
+    if (!ep) continue;
+    // Only send editable fields (not computed ones)
+    const editableFields = {
+      dl:     ['inc_mo','inc_h','sr_mo','sr_h','cr_mo','cr_h','nt_hrs','cplx','ai_pct','alloc_fte','avail_pct','skill_fit'],
+      pod:    ['inc_mo','sr_mo','cr_mo','nt_hrs','cplx','ai_pct','alloc_fte','module_lead'],
+      tower:  ['ready_fte','stretch_fte','shadow_fte','not_ready','demand_fte','target_fte','cert_pct']
+    }[type] || [];
+    const payload = {};
+    editableFields.forEach(f => { if (changes[f] !== undefined) payload[f] = changes[f]; });
+    try { await apiFetch(ep,'PATCH',payload); saved++; }
+    catch { failed++; }
+  }
+  toast(failed ? `Applied ${saved}, ${failed} failed` : `Applied ${saved} change(s) to DB`);
+  SIM.pending.clear();
+  // Exit sim mode and reload
+  SIM.active = false;
+  document.getElementById('sim-btn').textContent='Simulate';
+  document.getElementById('sim-btn').classList.remove('on');
+  document.getElementById('sim-bar').classList.remove('show');
+  SIM.rowData={}; SIM.baseData={}; SIM.rowType={};
+  nav(STATE.sec);
+}
+
+function injectSimPanel() {
+  const data = STATE.data;
+  if (!data) return;
+  const rows = data.modules || data.skills || [];
+  if (!rows.length) return;
+  const panel = document.createElement('div');
+  panel.id = 'sim-panel';
+  panel.className = 'sim-panel';
+  panel.innerHTML = `<h4>Simulation Comparison — Baseline vs What-If</h4>
+    <div class="sim-compare" id="sim-compare-grid"></div>`;
+  const content = document.getElementById('content');
+  content.insertBefore(panel, content.firstChild);
+  updateSimPanel();
+}
+
+function updateSimPanel() {
+  const grid = document.getElementById('sim-compare-grid');
+  if (!grid) return;
+  const rows = (STATE.data?.modules || STATE.data?.skills || []);
+  if (!rows.length) return;
+  // Compute baseline totals
+  const baseDem = rows.reduce((s,r)=> s + (SIM.baseData[r.id]?.demand_fte ?? r.demand_fte ?? 0), 0);
+  const baseCap = rows.reduce((s,r)=> s + (SIM.baseData[r.id]?.cap_fte     ?? r.cap_fte     ?? 0), 0);
+  const baseGap = baseDem - baseCap;
+  // Compute simulated totals
+  let simDem=0, simCap=0;
+  rows.forEach(r => {
+    const merged = {...(SIM.baseData[r.id]||r), ...(SIM.rowData[r.id]||{})};
+    const type = SIM.rowType[r.id] || 'dl';
+    const calc = computeLocal(type, merged);
+    simDem += calc.demand_fte || 0;
+    simCap += calc.cap_fte    || 0;
+  });
+  simDem = Math.round(simDem*10)/10;
+  simCap = Math.round(simCap*10)/10;
+  const simGap = Math.round((simDem-simCap)*10)/10;
+  const card = (lbl, base, sim) => {
+    const delta = Math.round((sim-base)*10)/10;
+    const sign  = delta>0?'+':'';
+    const col   = delta>0?'var(--red)':delta<0?'var(--green)':'var(--text2)';
+    return `<div class="sim-ccard">
+      <div class="sc-lbl">${lbl}</div>
+      <div class="sc-base">${base.toFixed(1)} (base)</div>
+      <div class="sc-new" style="color:${lbl==='Gap FTE'?(sim>2?'var(--red)':sim>0?'var(--amber)':'var(--green)'):'var(--cyan)'}">${sim.toFixed(1)}</div>
+      <div class="sc-chg" style="color:${col}">${delta!==0?sign+delta.toFixed(1)+' vs baseline':'No change'}</div>
+    </div>`;
+  };
+  const changedCount = SIM.pending.size;
+  grid.innerHTML =
+    card('Demand FTE', baseDem, simDem) +
+    card('Cap FTE',    baseCap, simCap) +
+    card('Gap FTE',    baseGap, simGap) +
+    `<div class="sim-ccard">
+      <div class="sc-lbl">Changed Rows</div>
+      <div class="sc-new" style="color:#C084FC">${changedCount}</div>
+      <div class="sc-chg" style="color:var(--text2)">${changedCount ? 'Click Apply to DB to save' : 'No edits yet'}</div>
+    </div>`;
+}
+
+function updateRowCalcs(row, data) {
+  row.querySelectorAll('[data-calc]').forEach(td => {
+    const f = td.dataset.calc;
+    if (f in data) {
+      td.textContent = typeof data[f]==='number' ? data[f].toFixed(1) : data[f];
+      td.className = td.className.replace(/rag-\w+/,'');
+      if (f==='gap_fte' || f==='rag') {
+        const g = data.gap_fte;
+        td.classList.add(g>0?'rag-red':g>-0.5?'rag-amber':'rag-green');
+      }
+    }
+  });
+  row.querySelectorAll('[data-rag]').forEach(td => {
+    td.innerHTML = ragPill(data.rag||'green');
+  });
+}
+
+// ── RENDER HELPERS ────────────────────────────────────────────────────────────
+const ragEmoji = r => r==='red'?'🔴':r==='amber'?'🟡':'🟢';
+const ragCls   = g => g>0?'rag-red':g>-0.5?'rag-amber':'rag-green';
+const ragPill  = r => `<span class="rag-pill ${r}">${ragEmoji(r)} ${r.charAt(0).toUpperCase()+r.slice(1)}</span>`;
+const sign     = n => n>0?'+'+n.toFixed(1):n.toFixed(1);
+const kpi      = (val,lbl,sub='',cls='fact') =>
+  `<div class="kpi ${cls}"><div class="kpi-value">${val}</div><div class="kpi-label">${lbl}</div>${sub?`<div class="kpi-sub">${sub}</div>`:''}</div>`;
+
+// ── CHART UTILITIES (pure SVG, no CDN) ───────────────────────────────────────
+function svgBarH(items,w=340,barH=18,gap=5){
+  if(!items||!items.length)return'<div style="color:var(--text2);font-size:11px;padding:8px">No data</div>';
+  const lpad=110,rpad=45,maxV=Math.max(...items.map(i=>i.v||0),0.1);
+  const scale=(w-lpad-rpad)/maxV,h=items.length*(barH+gap)+10;
+  return`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">${
+    items.map((item,i)=>{const y=i*(barH+gap)+4,bw=Math.max(2,(item.v||0)*scale);
+      return`<text x="${lpad-5}" y="${y+barH/2+4}" text-anchor="end" fill="#94A3B8" font-size="10" font-family="Segoe UI">${(item.l||'').slice(0,13)}</text>
+<rect x="${lpad}" y="${y}" width="${bw}" height="${barH}" rx="3" fill="${item.c||'#0288D1'}" opacity="0.85"/>
+<text x="${lpad+bw+5}" y="${y+barH/2+4}" fill="#E2E8F0" font-size="10" font-family="Segoe UI">${typeof item.v==='number'?item.v.toFixed(1):item.v}</text>`;
+    }).join('')}</svg>`;
+}
+
+function svgGroupBar(groups,w=360,h=130){
+  if(!groups||!groups.length)return'';
+  const bw=16,gap=6,ggap=20,lpad=8,bpad=22;
+  const maxV=Math.max(...groups.flatMap(g=>[g.d||0,g.c||0]),0.1);
+  const scale=(h-bpad)/maxV,gw=bw*2+gap,tw=groups.length*(gw+ggap)-ggap+lpad*2+70;
+  let bars='',labels='';
+  groups.forEach((g,i)=>{
+    const x=lpad+i*(gw+ggap),dh=Math.max(2,(g.d||0)*scale),ch=Math.max(2,(g.c||0)*scale);
+    bars+=`<rect x="${x}" y="${h-bpad-dh}" width="${bw}" height="${dh}" rx="2" fill="#EF4444" opacity="0.8"/>
+<rect x="${x+bw+gap}" y="${h-bpad-ch}" width="${bw}" height="${ch}" rx="2" fill="#22C55E" opacity="0.8"/>`;
+    labels+=`<text x="${x+gw/2}" y="${h-bpad+13}" text-anchor="middle" fill="#94A3B8" font-size="8" font-family="Segoe UI">${(g.l||'').slice(0,7)}</text>`;
+  });
+  return`<svg viewBox="0 0 ${tw} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+<line x1="${lpad}" y1="${h-bpad}" x2="${tw-70}" y2="${h-bpad}" stroke="#1E3251" stroke-width="1"/>
+${bars}${labels}
+<rect x="${tw-62}" y="4" width="8" height="8" fill="#EF4444" rx="1"/><text x="${tw-51}" y="12" fill="#94A3B8" font-size="8" font-family="Segoe UI">Demand</text>
+<rect x="${tw-62}" y="16" width="8" height="8" fill="#22C55E" rx="1"/><text x="${tw-51}" y="24" fill="#94A3B8" font-size="8" font-family="Segoe UI">Capacity</text>
+</svg>`;
+}
+
+function svgDonut(segments,size=100){
+  const total=segments.reduce((s,x)=>s+(x.v||0),0)||1;
+  const cx=size/2,cy=size/2,r=size*.38,ir=size*.24;
+  let angle=-Math.PI/2,paths='';
+  segments.forEach(seg=>{
+    const pct=(seg.v||0)/total,ea=angle+pct*2*Math.PI;
+    if(pct<.001){angle=ea;return;}
+    const lg=pct>.5?1:0,x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+    const x2=cx+r*Math.cos(ea),y2=cy+r*Math.sin(ea);
+    const ix1=cx+ir*Math.cos(angle),iy1=cy+ir*Math.sin(angle);
+    const ix2=cx+ir*Math.cos(ea),iy2=cy+ir*Math.sin(ea);
+    paths+=`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r},0,${lg},1,${x2.toFixed(1)},${y2.toFixed(1)} L${ix2.toFixed(1)},${iy2.toFixed(1)} A${ir},${ir},0,${lg},0,${ix1.toFixed(1)},${iy1.toFixed(1)} Z" fill="${seg.c}" opacity=".88"/>`;
+    angle=ea;
+  });
+  return`<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" style="width:${size}px;height:${size}px">
+${paths}<text x="${cx}" y="${cy+5}" text-anchor="middle" fill="#E2E8F0" font-size="14" font-weight="bold" font-family="Segoe UI">${total.toFixed(0)}</text>
+<text x="${cx}" y="${cy+15}" text-anchor="middle" fill="#94A3B8" font-size="8" font-family="Segoe UI">FTE</text></svg>`;
+}
+
+function secTabs(tabs,uid){
+  return`<div class="sec-tabs" id="tabs-${uid}">${tabs.map((t,i)=>`<div class="sec-tab ${t.cls||''} ${i===0?'active':''}" onclick="switchSecTab('${uid}',${i})">${t.label}</div>`).join('')}</div>
+${tabs.map((t,i)=>`<div class="sec-pane ${i===0?'active':''}" id="pane-${uid}-${i}">${t.html||''}</div>`).join('')}`;
+}
+
+function switchSecTab(uid,n){
+  document.querySelectorAll(`#tabs-${uid} .sec-tab`).forEach((t,i)=>t.classList.toggle('active',i===n));
+  for(let i=0;i<8;i++){const p=document.getElementById(`pane-${uid}-${i}`);if(p)p.classList.toggle('active',i===n);}
+  initLazyPanes();
+}
+
+async function initLazyPanes(){
+  document.querySelectorAll('[data-fetchurl]').forEach(async el=>{
+    const pane=el.closest('.sec-pane');
+    if(pane&&!pane.classList.contains('active'))return;
+    if(el.dataset.loaded)return;
+    el.dataset.loaded='1';
+    el.innerHTML='<div class="loading" style="padding:20px">Loading team data…</div>';
+    try{
+      const data=await apiFetch(el.dataset.fetchurl);
+      el.innerHTML=renderTeamTable(data);
+    }catch(e){el.innerHTML=`<div style="color:var(--red);padding:12px;font-size:11px">Failed to load: ${e.message}</div>`;}
+  });
+}
+
+function renderTeamTable(data){
+  if(!data||!data.length)return`<div class="block-body" style="color:var(--text2);font-size:11px;padding:16px">No resources assigned to this section yet. Assign via Resource Master (set the POD/Tower field on each person).</div>`;
+  const stars=n=>'★'.repeat(Math.max(0,n))+'☆'.repeat(Math.max(0,5-n));
+  const human=data.filter(r=>r.res_type==='Human'),agents=data.filter(r=>r.res_type==='Agent');
+  return`<div class="tbl-wrap"><table>
+<thead><tr><th>Name</th><th>Type</th><th>Level</th><th>Primary Skill</th><th>Secondary</th><th>Proficiency</th><th>Cert</th><th class="num">FTE</th><th>Skill Fit</th><th>Status</th></tr></thead>
+<tbody>${[...human,...agents].map(r=>`<tr>
+  <td style="font-weight:600;${r.res_type==='Agent'?'color:var(--twr-a)':''}">${r.name}</td>
+  <td><span class="badge ${r.res_type==='Human'?'human':'agent'}">${r.res_type}</span></td>
+  <td style="font-size:10px;color:var(--text2)">${r.career_level||'—'}</td>
+  <td>${r.primary_skill}</td><td style="font-size:10px;color:var(--text2)">${r.secondary_skill}</td>
+  <td style="color:var(--amber)">${stars(r.proficiency)}</td>
+  <td><span class="rag-pill ${r.cert==='Y'?'green':'red'}">${r.cert}</span></td>
+  <td class="num">${r.alloc_fte}</td>
+  <td class="num">${(r.skill_fit*100).toFixed(0)}%</td>
+  <td><span class="rag-pill ${r.status==='Active'?'green':'amber'}">${r.status}</span></td>
+</tr>`).join('')}</tbody></table></div>`;
+}
+
+function uploadZone(section,ctx){
+  const id=`up-${section}-${ctx||'x'}`;
+  return`<div class="upload-zone" onclick="document.getElementById('${id}').click()">
+  <input type="file" id="${id}" accept=".xlsx,.xls" onchange="handleUpload(this,'${section}')">
+  <span class="up-icon">&#8679;</span>
+  <span style="font-size:11px;color:var(--text2)">Bulk update via Excel upload — <a href="#" onclick="event.stopPropagation();toast('Export current data first to use as your upload template')" style="color:var(--fact-a)">use Export as template</a></span>
+</div>`;
+}
+
+async function handleUpload(input,section){
+  if(!input.files.length)return;
+  const fd=new FormData();fd.append('file',input.files[0]);
+  try{
+    const r=await fetch(`/api/upload/excel?section=${section}`,{method:'POST',body:fd});
+    const data=await r.json();
+    if(data.ok){toast(`Updated ${data.updated} row(s) from Excel`);await nav(STATE.sec);}
+    else toast('Upload failed: '+(data.error||'unknown error'),true);
+  }catch(e){toast('Upload error: '+e.message,true);}
+  input.value='';
+}
+
+// ── FACTORY DASHBOARD ─────────────────────────────────────────────────────────
+function renderFactory(d) {
+  const gCls = `rag-${d.gap_fte>0?'red':d.gap_fte>-2?'amber':'green'}`;
+  const redN=d.accounts.filter(a=>a.rag==='red').length;
+  const ambN=d.accounts.filter(a=>a.rag==='amber').length;
+  const grnN=d.accounts.filter(a=>a.rag==='green').length;
+  return `
+<div class="sec-header fact" style="display:flex;justify-content:space-between;align-items:flex-start">
+  <div>
+    <h2>AMS Factory — Command Centre</h2>
+    <p>AMS Team Pilot · 3 Accounts · Go-Live: 01-Aug-2026 · ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</p>
+  </div>
+  <button class="btn btn-fact" style="font-size:10px;padding:4px 10px;flex-shrink:0" onclick="openSettings()">&#9881; Master Settings</button>
+</div>
+<div class="kpi-grid">
+  ${kpi(d.contracted_fte,'Contracted FTE','Commercial commitment','fact')}
+  ${kpi(d.demand_fte,'Demand FTE','Current month total','rag-'+(d.gap_fte>0?'red':d.gap_fte>-2?'amber':'green'))}
+  ${kpi(d.cap_fte,'Capacity FTE','Skill-adjusted effective','fact')}
+  ${kpi((d.gap_fte>0?'+':'')+d.gap_fte,'Gap FTE','Demand minus Capacity','rag-'+(d.gap_fte>0?'red':d.gap_fte>-2?'amber':'green'))}
+  ${kpi(d.agent_fte,'Agent FTE','AI agents deployed','twr')}
+  ${kpi((d.ai_pct*100).toFixed(0)+'%','AI Productivity','Pilot target 20%','twr')}
+</div>
+
+<div class="chart-grid">
+  <div class="chart-card">
+    <h4>Delivery Cell — Demand vs Capacity</h4>
+    ${svgGroupBar(d.accounts.map(a=>({l:dlLabel(a.id),d:a.demand_fte,c:a.cap_fte})),360,130)}
+  </div>
+  <div class="chart-card">
+    <h4>POD — Demand vs Capacity</h4>
+    ${svgGroupBar(d.pods.map(p=>({l:p.id.replace('POD_',''),d:p.demand_fte,c:p.cap_fte})),400,130)}
+  </div>
+  <div class="chart-card" style="display:flex;gap:16px;align-items:center">
+    <div>
+      <h4>Account RAG Status</h4>
+      ${svgDonut([{v:redN,c:'#EF4444'},{v:ambN,c:'#F59E0B'},{v:grnN,c:'#22C55E'}],100)}
+    </div>
+    <div class="chart-legend" style="flex-direction:column;gap:8px">
+      <span><span class="dot" style="background:#EF4444"></span>Red (${redN} accounts)</span>
+      <span><span class="dot" style="background:#F59E0B"></span>Amber (${ambN} accounts)</span>
+      <span><span class="dot" style="background:#22C55E"></span>Green (${grnN} accounts)</span>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h4>Tower Ready FTE</h4>
+    ${svgBarH(d.towers.map(t=>({l:t.id.replace('TWR_',''),v:t.cap_fte,c:'#7B1FA2'})))}
+  </div>
+</div>
+
+<div class="block">
+  <div class="block-title dl">Delivery Cell Status — Live Roll-up</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Account</th><th class="num">Demand FTE</th><th class="num">Cap FTE</th><th class="num">Gap FTE</th><th>RAG</th><th>Modules</th></tr></thead>
+    <tbody>
+    ${d.accounts.map(a=>`<tr>
+      <td><a href="#" onclick="nav('${dlNavId(a.id)}')" style="color:var(--dl-a);text-decoration:none;font-weight:600">${dlLabel(a.id)}</a></td>
+      <td class="num">${a.demand_fte}</td>
+      <td class="num">${a.cap_fte}</td>
+      <td class="num ${ragCls(a.gap_fte)}">${sign(a.gap_fte)}</td>
+      <td>${ragPill(a.rag)}</td>
+      <td style="font-size:10px;color:var(--text2)">${a.modules.length} modules</td>
+    </tr>`).join('')}
+    <tr class="tot-row">
+      <td>TOTAL</td>
+      <td class="num">${d.demand_fte}</td>
+      <td class="num">${d.cap_fte}</td>
+      <td class="num ${gCls}">${sign(d.gap_fte)}</td>
+      <td>${ragPill(d.gap_fte>2?'red':d.gap_fte>0?'amber':'green')}</td>
+      <td></td>
+    </tr>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="block">
+  <div class="block-title pod">POD Capacity Status — Live Roll-up</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>POD</th><th class="num">Demand FTE</th><th class="num">Cap FTE</th><th class="num">Gap FTE</th><th>RAG</th><th>Modules</th></tr></thead>
+    <tbody>
+    ${d.pods.map(p=>`<tr>
+      <td><a href="#" onclick="nav('${podNavId(p.id)}')" style="color:var(--pod-a);text-decoration:none;font-weight:600">${p.id.replace('POD_','')}</a></td>
+      <td class="num">${p.demand_fte}</td>
+      <td class="num">${p.cap_fte}</td>
+      <td class="num ${ragCls(p.gap_fte)}">${sign(p.gap_fte)}</td>
+      <td>${ragPill(p.rag)}</td>
+      <td style="font-size:10px;color:var(--text2)">${p.modules.length} modules</td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="block">
+  <div class="block-title twr">Tower Capacity Status — Live Roll-up</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Tower</th><th class="num">Demand FTE</th><th class="num">Cap FTE</th><th class="num">Gap FTE</th><th>RAG</th><th>Skills</th></tr></thead>
+    <tbody>
+    ${d.towers.map(t=>`<tr>
+      <td><a href="#" onclick="nav('${twrNavId(t.id)}')" style="color:var(--twr-a);text-decoration:none;font-weight:600">${t.id.replace('TWR_','')}</a></td>
+      <td class="num">${t.demand_fte}</td>
+      <td class="num">${t.cap_fte}</td>
+      <td class="num ${ragCls(t.gap_fte)}">${sign(t.gap_fte)}</td>
+      <td>${ragPill(t.rag)}</td>
+      <td style="font-size:10px;color:var(--text2)">${t.skills.length} skills</td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="block">
+  <div class="block-title twr">AI Agent Status & Productivity</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Agent</th><th>Function</th><th>Level</th><th>FTE Equiv</th><th>Human FTE Saved</th><th>Status</th><th>Scope</th></tr></thead>
+    <tbody>
+    ${[['Incident Triage Agent','Auto-classify & route incidents','L2','2.5','1.8','Active','All Accounts'],
+       ['RCA Generator','Root cause analysis','L2','1.5','1.2','Active','All Accounts'],
+       ['CR Sizing Agent','Estimate effort for CRs','L1','2.0','0.8','Pilot','Account Alpha · Account Beta'],
+       ['Status Report Agent','Auto-generate ops reports','L3','0.8','1.5','Active','All Accounts'],
+       ['RFP Estimator Agent','FTE & pricing for bids','L0','2.9','1.2','Dev','Factory Lead']].map(r=>`<tr>
+      <td style="font-weight:600;color:var(--twr-a)">${r[0]}</td>
+      <td style="color:var(--text2);font-size:10px">${r[1]}</td>
+      <td><span class="badge agent">${r[2]}</span></td>
+      <td class="num">${r[3]}</td>
+      <td class="num" style="color:var(--green)">${r[4]}</td>
+      <td><span class="rag-pill ${r[5]==='Active'?'green':r[5]==='Pilot'?'amber':'red'}">${r[5]}</span></td>
+      <td style="font-size:10px;color:var(--text2)">${r[6]}</td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="block">
+  <div class="block-title fact" style="display:flex;justify-content:space-between;align-items:center">
+    Open Requirements
+    <button class="btn btn-fact" style="font-size:10px;padding:3px 8px" onclick="openReqModal('factory','Factory')">+ Add</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th>From</th><th>Skill / Module</th><th>FTE</th><th>By</th><th>Priority</th><th>Route To</th><th>Status</th></tr></thead>
+    <tbody>
+    ${d.requirements.length===0?'<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:20px">No open requirements</td></tr>':
+      d.requirements.map(r=>`<tr>
+        <td style="color:var(--text2);font-size:10px">#${r.id}</td>
+        <td style="font-size:10px">${r.source}</td>
+        <td style="font-weight:600">${r.skill_module}</td>
+        <td class="num">${r.fte_req}</td>
+        <td style="font-size:10px">${r.by_month}</td>
+        <td><span class="rag-pill ${r.priority==='Critical'?'red':r.priority==='High'?'amber':'green'}">${r.priority}</span></td>
+        <td style="color:var(--pod-a);font-size:10px">${r.route_to}</td>
+        <td><span class="rag-pill ${r.status==='Open'?'amber':r.status==='Approved'?'green':'red'}">${r.status}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>
+</div>`;
+}
+
+// ── ACCOUNT SECTION ───────────────────────────────────────────────────────────
+function renderAccount(aid, label, cls, d) {
+  const totalDem = d.modules.reduce((s,m)=>s+m.demand_fte,0).toFixed(1);
+  const totalCap = d.modules.reduce((s,m)=>s+m.cap_fte,0).toFixed(1);
+  const totalGap = (parseFloat(totalDem)-parseFloat(totalCap)).toFixed(1);
+
+  const tabData = `
+${uploadZone('dl',aid)}
+<div class="block">
+  <div class="block-title ${cls}" style="display:flex;justify-content:space-between;align-items:center">
+    Monthly Demand &amp; Capacity — amber cells are editable
+    <button class="btn btn-dl" style="font-size:10px;padding:3px 10px" onclick="addDLModule('${aid}')">+ Add Module</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>Module</th>
+      <th class="num" style="color:var(--amber)">Inc/Mo</th><th class="num" style="color:var(--amber)">Inc Hrs</th>
+      <th class="num" style="color:var(--amber)">SR/Mo</th><th class="num" style="color:var(--amber)">CR/Mo</th>
+      <th class="num" style="color:var(--amber)">Cplx</th><th class="num" style="color:var(--amber)">AI%</th>
+      <th class="num">Dem Hrs</th><th class="num">Dem FTE</th>
+      <th class="num" style="color:var(--amber)">Alloc FTE</th>
+      <th class="num" style="color:var(--amber)">Avail%</th><th class="num" style="color:var(--amber)">Skill Fit</th>
+      <th class="num">Cap FTE</th><th class="num">Gap FTE</th><th>RAG</th><th>Route</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${d.modules.map(m=>`<tr>
+      <td style="font-weight:600">${m.module}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="inc_mo" style="background:rgba(255,253,200,.06)">${m.inc_mo}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="inc_h" style="background:rgba(255,253,200,.06)">${m.inc_h}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="sr_mo" style="background:rgba(255,253,200,.06)">${m.sr_mo}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="cr_mo" style="background:rgba(255,253,200,.06)">${m.cr_mo}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="cplx" style="background:rgba(255,253,200,.06)">${m.cplx}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="ai_pct" data-pct="1" data-rawval="${m.ai_pct}" style="background:rgba(255,253,200,.06)">${(m.ai_pct*100).toFixed(0)}%</td>
+      <td class="num" data-calc="demand_hrs">${m.demand_hrs}</td>
+      <td class="num" data-calc="demand_fte" style="font-weight:600">${m.demand_fte}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="alloc_fte" style="background:rgba(255,253,200,.06)">${m.alloc_fte}</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="avail_pct" data-pct="1" data-rawval="${m.avail_pct}" style="background:rgba(255,253,200,.06)">${(m.avail_pct*100).toFixed(0)}%</td>
+      <td class="num" data-ep="/api/module/${m.id}" data-field="skill_fit" style="background:rgba(255,253,200,.06)">${m.skill_fit}</td>
+      <td class="num" data-calc="cap_fte" style="font-weight:600">${m.cap_fte}</td>
+      <td class="num ${ragCls(m.gap_fte)}" data-calc="gap_fte">${sign(m.gap_fte)}</td>
+      <td data-rag>${ragPill(m.rag)}</td>
+      <td style="font-size:10px;color:var(--pod-a)">${m.routing}</td>
+      <td><button class="row-btn del" onclick="deleteDLModule(${m.id})" title="Remove module">&#10005;</button></td>
+    </tr>`).join('')}
+    <tr class="tot-row">
+      <td>TOTAL</td><td colspan="7"></td>
+      <td class="num">${totalDem}</td><td colspan="3"></td>
+      <td class="num">${totalCap}</td>
+      <td class="num ${ragCls(parseFloat(totalGap))}">${parseFloat(totalGap)>0?'+':''}${totalGap}</td>
+      <td colspan="3"></td>
+    </tr>
+    </tbody>
+  </table></div>
+</div>
+<div class="block">
+  <div class="block-title ${cls}" style="display:flex;justify-content:space-between;align-items:center">
+    Skill / Capacity Requirements Log
+    <button class="btn btn-dl" style="font-size:10px;padding:3px 8px" onclick="openReqModal('${aid}','${label}')">+ Add Requirement</button>
+  </div>
+  ${reqTable(d.requirements, cls)}
+</div>
+<div class="block">
+  <div class="block-title ${cls}">Monthly Tracker (update each month)</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Month</th><th class="num">Incidents</th><th class="num">SRs</th><th class="num">CRs</th><th class="num">Demand FTE</th><th class="num">Cap FTE</th><th class="num">Gap FTE</th><th>RAG</th><th>Key Action</th></tr></thead>
+    <tbody>${trackerRows(aid)}</tbody>
+  </table></div>
+</div>`;
+
+  const tabCharts = `
+<div class="chart-grid">
+  <div class="chart-card"><h4>Module Demand FTE</h4>${svgBarH(d.modules.map(m=>({l:m.module,v:m.demand_fte,c:'#EF4444'})))}</div>
+  <div class="chart-card"><h4>Module Capacity FTE</h4>${svgBarH(d.modules.map(m=>({l:m.module,v:m.cap_fte,c:'#22C55E'})))}</div>
+  <div class="chart-card"><h4>Demand vs Capacity by Module</h4>${svgGroupBar(d.modules.map(m=>({l:m.module.slice(0,8),d:m.demand_fte,c:m.cap_fte})))}</div>
+  <div class="chart-card" style="display:flex;gap:16px;align-items:center">
+    <div><h4>Overall Split</h4>${svgDonut([{v:parseFloat(totalDem),c:'#EF4444'},{v:parseFloat(totalCap),c:'#22C55E'}],100)}</div>
+    <div class="chart-legend" style="flex-direction:column;gap:6px">
+      <span><span class="dot" style="background:#EF4444"></span>Demand ${totalDem} FTE</span>
+      <span><span class="dot" style="background:#22C55E"></span>Capacity ${totalCap} FTE</span>
+      <span style="color:${parseFloat(totalGap)>0?'var(--red)':'var(--green)'}">Gap: ${parseFloat(totalGap)>0?'+':''}${totalGap} FTE</span>
+    </div>
+  </div>
+  <div class="chart-card"><h4>Gap by Module (absolute)</h4>${svgBarH(d.modules.map(m=>({l:m.module,v:Math.abs(m.gap_fte),c:m.gap_fte>2?'#EF4444':m.gap_fte>0?'#F59E0B':'#22C55E'})))}</div>
+  <div class="chart-card"><h4>AI% by Module</h4>${svgBarH(d.modules.map(m=>({l:m.module,v:parseFloat((m.ai_pct*100).toFixed(1)),c:'#7B1FA2'})))}</div>
+</div>`;
+
+  return `
+<div class="sec-header ${cls}">
+  <h2>${label}</h2>
+  <p>Delivery Cell · Amber-highlighted cells are editable · Changes auto-save</p>
+</div>
+<div class="kpi-grid">
+  ${kpi(totalDem,'Demand FTE','Computed from inputs','dl')}
+  ${kpi(totalCap,'Capacity FTE','Skill-adjusted','dl')}
+  ${kpi((parseFloat(totalGap)>0?'+':'')+totalGap,'Gap FTE',parseFloat(totalGap)>0?'Shortage':'Balanced','rag-'+(parseFloat(totalGap)>0?'red':parseFloat(totalGap)>-2?'amber':'green'))}
+  ${kpi(d.modules.length,'Modules','In scope',cls)}
+</div>
+${secTabs([
+  {label:'Demand & Tracker',cls:'dl',html:tabData},
+  {label:'Charts',cls:'dl',html:tabCharts}
+],'dl-'+aid)}`;
+}
+
+function trackerRows(aid) {
+  const base = {'DL_ACCOUNT_A':[[380,90,18,31.2,29.4],[400,95,22,33.5,29.4],[420,100,25,35.8,31.0],[410,98,20,34.1,31.0]],
+                'DL_ACCOUNT_B':[[320,70,12,27.4,25.0],[330,72,14,28.5,25.0],[340,75,16,29.6,26.5],[330,73,13,28.0,26.5]],
+                'DL_ACCOUNT_C':[[280,60,14,30.2,25.0],[310,65,18,33.4,26.0],[350,70,22,37.8,28.0],[380,75,28,40.1,30.0]]};
+  const months = ['Jun-26','Jul-26','Aug-26','Sep-26','Oct-26','Nov-26'];
+  const rows = base[aid]||[];
+  return months.map((m,i)=>{
+    if(i<rows.length){
+      const [inc,sr,cr,dem,cap]=rows[i]; const g=Number((dem-cap).toFixed(1));
+      return `<tr><td style="font-weight:600;width:70px">${m}</td><td class="num">${inc}</td><td class="num">${sr}</td><td class="num">${cr}</td><td class="num">${dem}</td><td class="num">${cap}</td><td class="num ${ragCls(g)}">${sign(g)}</td><td>${ragPill(g>2?'red':g>0?'amber':'green')}</td><td style="color:var(--text2);font-size:10px">${g>2?'Raise request to POD/Tower':g>0?'Monitor':'Balanced'}</td></tr>`;
+    }
+    return `<tr><td style="font-weight:600;width:70px">${m}</td><td class="num" contenteditable style="background:rgba(255,253,200,.06)"></td><td class="num" contenteditable style="background:rgba(255,253,200,.06)"></td><td class="num" contenteditable style="background:rgba(255,253,200,.06)"></td><td class="num" contenteditable style="background:rgba(255,253,200,.06)"></td><td class="num" contenteditable style="background:rgba(255,253,200,.06)"></td><td></td><td></td><td contenteditable style="background:rgba(255,253,200,.06)"></td></tr>`;
+  }).join('');
+}
+
+function reqTable(reqs, cls) {
+  if(!reqs||!reqs.length) return '<div class="block-body" style="color:var(--text2);font-size:11px">No requirements logged.</div>';
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>#</th><th>Skill / Module</th><th class="num">FTE</th><th>By Month</th><th>Priority</th><th>Route To</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody>${reqs.map(r=>`<tr>
+      <td style="color:var(--text2);font-size:10px">#${r.id}</td>
+      <td style="font-weight:600">${r.skill_module}</td>
+      <td class="num">${r.fte_req}</td>
+      <td style="font-size:10px">${r.by_month}</td>
+      <td><span class="rag-pill ${r.priority==='Critical'?'red':r.priority==='High'?'amber':'green'}">${r.priority}</span></td>
+      <td style="color:var(--pod-a);font-size:10px">${r.route_to}</td>
+      <td><span class="rag-pill ${r.status==='Open'?'amber':r.status==='Approved'?'green':'red'}"
+          style="cursor:pointer" onclick="toggleReqStatus(${r.id},this)">${r.status}</span></td>
+      <td style="font-size:10px;color:var(--text2)">${r.notes||''}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+async function toggleReqStatus(id, el) {
+  const cur = el.textContent.trim();
+  const next = cur==='Open'?'In Progress':cur==='In Progress'?'Approved':'Open';
+  const updated = await apiFetch(`/api/requirements/${id}`,'PATCH',{status:next});
+  el.textContent = updated.status;
+  el.className = `rag-pill ${next==='Open'?'amber':next==='Approved'?'green':'red'}`;
+  toast('Status updated');
+}
+
+// ── POD SECTION ───────────────────────────────────────────────────────────────
+function renderPOD(pid, label, lead, d) {
+  const tabModules = `
+${uploadZone('pod',pid)}
+<div class="block">
+  <div class="block-title pod" style="display:flex;justify-content:space-between;align-items:center">
+    Module Demand — amber cells are editable
+    <button class="btn btn-pod" style="font-size:10px;padding:3px 10px" onclick="addPODModule('${pid}')">+ Add Module</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>Module</th><th>Module Lead</th>
+      <th class="num" style="color:var(--amber)">Inc/Mo</th><th class="num" style="color:var(--amber)">SR/Mo</th>
+      <th class="num" style="color:var(--amber)">CR/Mo</th><th class="num" style="color:var(--amber)">NT Hrs</th>
+      <th class="num" style="color:var(--amber)">Cplx</th><th class="num" style="color:var(--amber)">AI%</th>
+      <th class="num">Dem FTE</th><th class="num" style="color:var(--amber)">Alloc FTE</th>
+      <th class="num">Cap FTE</th><th class="num">Gap FTE</th><th>RAG</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${d.modules.map(m=>`<tr>
+      <td style="font-weight:600">${m.module}</td>
+      <td data-ep="/api/pod_module/${m.id}" data-field="module_lead" data-istext="1" style="background:rgba(255,253,200,.06);font-size:11px">${m.module_lead}</td>
+      <td class="num" data-ep="/api/pod_module/${m.id}" data-field="inc_mo" style="background:rgba(255,253,200,.06)">${m.inc_mo}</td>
+      <td class="num" data-ep="/api/pod_module/${m.id}" data-field="sr_mo" style="background:rgba(255,253,200,.06)">${m.sr_mo}</td>
+      <td class="num" data-ep="/api/pod_module/${m.id}" data-field="cr_mo" style="background:rgba(255,253,200,.06)">${m.cr_mo}</td>
+      <td class="num" data-ep="/api/pod_module/${m.id}" data-field="nt_hrs" style="background:rgba(255,253,200,.06)">${m.nt_hrs}</td>
+      <td class="num" data-ep="/api/pod_module/${m.id}" data-field="cplx" style="background:rgba(255,253,200,.06)">${m.cplx}</td>
+      <td class="num" data-ep="/api/pod_module/${m.id}" data-field="ai_pct" data-pct="1" data-rawval="${m.ai_pct}" style="background:rgba(255,253,200,.06)">${(m.ai_pct*100).toFixed(0)}%</td>
+      <td class="num" data-calc="demand_fte" style="font-weight:600">${m.demand_fte}</td>
+      <td class="num" data-ep="/api/pod_module/${m.id}" data-field="alloc_fte" style="background:rgba(255,253,200,.06)">${m.alloc_fte}</td>
+      <td class="num" data-calc="cap_fte">${m.cap_fte}</td>
+      <td class="num ${ragCls(m.gap_fte)}" data-calc="gap_fte">${sign(m.gap_fte)}</td>
+      <td data-rag>${ragPill(m.rag)}</td>
+      <td><button class="row-btn del" onclick="deletePODModule(${m.id})" title="Remove">&#10005;</button></td>
+    </tr>`).join('')}
+    <tr class="tot-row">
+      <td colspan="8">POD TOTAL</td>
+      <td class="num">${d.demand_fte}</td><td></td>
+      <td class="num">${d.cap_fte}</td>
+      <td class="num ${ragCls(d.gap_fte)}">${sign(d.gap_fte)}</td>
+      <td>${ragPill(d.rag)}</td><td></td>
+    </tr>
+    </tbody>
+  </table></div>
+</div>
+<div class="block">
+  <div class="block-title pod" style="display:flex;justify-content:space-between;align-items:center">
+    Inbound Resource Requests
+    <button class="btn btn-pod" style="font-size:10px;padding:3px 8px" onclick="openReqModal('${pid}','${pid.replace('POD_','')} POD')">+ Raise Request</button>
+  </div>
+  ${d.inbound.length===0?'<div class="block-body" style="color:var(--text2);font-size:11px">No open requests from Delivery Leads.</div>':
+    `<div class="tbl-wrap"><table>
+      <thead><tr><th>#</th><th>From Account</th><th>Skill / Module</th><th class="num">FTE</th><th>By Month</th><th>Priority</th><th>Status</th><th>Raised By</th></tr></thead>
+      <tbody>${d.inbound.map(r=>`<tr>
+        <td style="color:var(--text2);font-size:10px">#${r.id}</td>
+        <td style="color:var(--dl-a);font-size:10px">${r.source}</td>
+        <td style="font-weight:600">${r.skill_module}</td>
+        <td class="num">${r.fte_req}</td><td style="font-size:10px">${r.by_month}</td>
+        <td><span class="rag-pill ${r.priority==='Critical'?'red':r.priority==='High'?'amber':'green'}">${r.priority}</span></td>
+        <td><span class="rag-pill ${r.status==='Open'?'amber':r.status==='Approved'?'green':'red'}" style="cursor:pointer" onclick="toggleReqStatus(${r.id},this)">${r.status}</span></td>
+        <td style="font-size:10px;color:var(--text2)">${r.raised_by||'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`}
+</div>`;
+
+  const tabCharts = `
+<div class="chart-grid">
+  <div class="chart-card"><h4>Module Demand FTE</h4>${svgBarH(d.modules.map(m=>({l:m.module,v:m.demand_fte,c:'#0288D1'})))}</div>
+  <div class="chart-card"><h4>Module Capacity FTE</h4>${svgBarH(d.modules.map(m=>({l:m.module,v:m.cap_fte,c:'#22C55E'})))}</div>
+  <div class="chart-card"><h4>Demand vs Capacity</h4>${svgGroupBar(d.modules.map(m=>({l:m.module.slice(0,8),d:m.demand_fte,c:m.cap_fte})))}</div>
+  <div class="chart-card"><h4>Allocated FTE by Module</h4>${svgBarH(d.modules.map(m=>({l:m.module,v:m.alloc_fte,c:'#0A2E5C'})))}</div>
+</div>`;
+
+  const tabTeam = `<div class="block">
+  <div class="block-title pod">Team Skills &amp; People</div>
+  <div data-fetchurl="/api/pod/${pid}/resources"><div class="loading" style="padding:20px">Switch to this tab to load team data…</div></div>
+</div>`;
+
+  return `
+<div class="sec-header pod">
+  <h2>${label}</h2>
+  <p>POD Lead: ${lead} · ${d.modules.length} modules · Amber cells are editable</p>
+</div>
+<div class="kpi-grid">
+  ${kpi(d.demand_fte,'Demand FTE','Module total','pod')}
+  ${kpi(d.cap_fte,'Capacity FTE','Allocated × 0.85','pod')}
+  ${kpi(sign(d.gap_fte),'Gap FTE','','rag-'+(d.gap_fte>0?'red':d.gap_fte>-2?'amber':'green'))}
+  ${kpi(d.modules.length,'Modules','This POD','pod')}
+  ${kpi(d.inbound.filter(r=>r.status==='Open').length,'Open Requests','','rag-'+(d.inbound.filter(r=>r.status==='Open').length>0?'amber':'green'))}
+</div>
+${secTabs([
+  {label:'Modules & Requests',cls:'pod',html:tabModules},
+  {label:'Charts',cls:'pod',html:tabCharts},
+  {label:'Team Skills',cls:'pod',html:tabTeam}
+],'pod-'+pid)}`;
+}
+
+// ── TOWER SECTION ─────────────────────────────────────────────────────────────
+function renderTower(tid, label, lead, poolFte, d) {
+  const rdy=d.skills.reduce((s,r)=>s+r.ready_fte,0);
+  const str=d.skills.reduce((s,r)=>s+r.stretch_fte,0);
+  const shd=d.skills.reduce((s,r)=>s+r.shadow_fte,0);
+  const nrd=d.skills.reduce((s,r)=>s+r.not_ready,0);
+
+  const tabSkills = `
+${uploadZone('tower',tid)}
+<div class="block">
+  <div class="block-title twr" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Skill Coverage &mdash; <span style="font-weight:normal;font-size:10px">Ready=productive · Stretch=capable/outside core · Shadow=learning (future pipeline)</span></span>
+    <button class="btn btn-twr" style="font-size:10px;padding:3px 10px;flex-shrink:0;margin-left:8px" onclick="addTowerSkill('${tid}')">+ Add Skill</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>Skill</th><th class="num">Target FTE</th>
+      <th class="num" style="color:var(--amber)">Ready FTE</th>
+      <th class="num" style="color:var(--amber)" title="Capable but outside core skill area — may need guidance">Stretch FTE</th>
+      <th class="num" style="color:var(--amber)" title="Actively learning — not yet delivering solo">Shadow FTE</th>
+      <th class="num" style="color:var(--amber)">Not Ready</th>
+      <th class="num" style="color:var(--amber)">Demand FTE</th>
+      <th class="num">Coverage %</th><th class="num">Cap FTE</th><th class="num">Gap FTE</th><th>RAG</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${d.skills.map(s=>`<tr>
+      <td style="font-weight:600">${s.skill}</td>
+      <td class="num">${s.target_fte}</td>
+      <td class="num" data-ep="/api/tower_skill/${s.id}" data-field="ready_fte" style="background:rgba(255,253,200,.06)">${s.ready_fte}</td>
+      <td class="num" data-ep="/api/tower_skill/${s.id}" data-field="stretch_fte" style="background:rgba(255,253,200,.06)">${s.stretch_fte}</td>
+      <td class="num" data-ep="/api/tower_skill/${s.id}" data-field="shadow_fte" style="background:rgba(255,253,200,.06)">${s.shadow_fte}</td>
+      <td class="num" data-ep="/api/tower_skill/${s.id}" data-field="not_ready" style="background:rgba(255,253,200,.06)">${s.not_ready}</td>
+      <td class="num" data-ep="/api/tower_skill/${s.id}" data-field="demand_fte" style="background:rgba(255,253,200,.06)">${s.demand_fte}</td>
+      <td class="num" data-calc="coverage_pct">${s.coverage_pct}%</td>
+      <td class="num" data-calc="cap_fte">${s.cap_fte}</td>
+      <td class="num ${ragCls(s.gap_fte)}" data-calc="gap_fte">${sign(s.gap_fte)}</td>
+      <td data-rag>${ragPill(s.rag)}</td>
+      <td><button class="row-btn del" onclick="deleteTowerSkill(${s.id})" title="Remove skill">&#10005;</button></td>
+    </tr>`).join('')}
+    <tr class="tot-row">
+      <td>TOTAL</td>
+      <td class="num">${d.skills.reduce((s,r)=>s+r.target_fte,0).toFixed(0)}</td>
+      <td class="num">${rdy.toFixed(0)}</td><td class="num">${str.toFixed(0)}</td>
+      <td class="num">${shd.toFixed(0)}</td><td class="num">${nrd.toFixed(0)}</td>
+      <td class="num">${d.demand_fte}</td><td></td>
+      <td class="num">${d.cap_fte}</td>
+      <td class="num ${ragCls(d.gap_fte)}">${sign(d.gap_fte)}</td>
+      <td>${ragPill(d.rag)}</td><td></td>
+    </tr>
+    </tbody>
+  </table></div>
+</div>
+<div class="block">
+  <div class="block-title twr">Inbound Requests from PODs &amp; Accounts</div>
+  ${d.inbound.length===0?'<div class="block-body" style="color:var(--text2);font-size:11px">No open requests.</div>':
+    `<div class="tbl-wrap"><table>
+      <thead><tr><th>#</th><th>From</th><th>Skill Needed</th><th class="num">FTE</th><th>By Month</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>${d.inbound.map(r=>`<tr>
+        <td style="color:var(--text2);font-size:10px">#${r.id}</td>
+        <td style="font-size:10px">${r.source}</td>
+        <td style="font-weight:600">${r.skill_module}</td>
+        <td class="num">${r.fte_req}</td><td style="font-size:10px">${r.by_month}</td>
+        <td><span class="rag-pill ${r.priority==='Critical'?'red':'amber'}">${r.priority}</span></td>
+        <td><span class="rag-pill ${r.status==='Open'?'amber':'green'}" style="cursor:pointer" onclick="toggleReqStatus(${r.id},this)">${r.status}</span></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`}
+</div>`;
+
+  const tabCharts = `
+<div class="chart-grid">
+  <div class="chart-card"><h4>Ready FTE by Skill</h4>${svgBarH(d.skills.map(s=>({l:s.skill,v:s.ready_fte,c:'#22C55E'})))}</div>
+  <div class="chart-card"><h4>Demand vs Ready FTE</h4>${svgGroupBar(d.skills.map(s=>({l:s.skill.slice(0,8),d:s.demand_fte,c:s.ready_fte})))}</div>
+  <div class="chart-card"><h4>Coverage % by Skill</h4>${svgBarH(d.skills.map(s=>({l:s.skill,v:s.coverage_pct,c:s.coverage_pct>=100?'#22C55E':s.coverage_pct>=70?'#F59E0B':'#EF4444'})))}</div>
+  <div class="chart-card" style="display:flex;gap:12px;align-items:center">
+    <div><h4>Skill Pipeline</h4>${svgDonut([{v:rdy,c:'#22C55E'},{v:str,c:'#F59E0B'},{v:shd,c:'#7B1FA2'},{v:nrd,c:'#EF4444'}],100)}</div>
+    <div class="chart-legend" style="flex-direction:column;gap:6px">
+      <span><span class="dot" style="background:#22C55E"></span>Ready ${rdy.toFixed(0)} FTE</span>
+      <span><span class="dot" style="background:#F59E0B"></span>Stretch ${str.toFixed(0)} FTE</span>
+      <span><span class="dot" style="background:#7B1FA2"></span>Shadow ${shd.toFixed(0)} FTE</span>
+      <span><span class="dot" style="background:#EF4444"></span>Not Ready ${nrd.toFixed(0)} FTE</span>
+    </div>
+  </div>
+</div>`;
+
+  const tabTeam = `<div class="block">
+  <div class="block-title twr">Tower Team Members</div>
+  <div data-fetchurl="/api/tower/${tid}/resources"><div class="loading" style="padding:20px">Switch to this tab to load team data…</div></div>
+</div>`;
+
+  return `
+<div class="sec-header twr">
+  <h2>${label}</h2>
+  <p>Tower Lead: ${lead} · Pool: ${poolFte} FTE · Ready=productive · Stretch=capable · Shadow=learning</p>
+</div>
+<div class="kpi-grid">
+  ${kpi(poolFte,'FTE Pool','Total in tower','twr')}
+  ${kpi(d.demand_fte,'Demand FTE','','twr')}
+  ${kpi(d.cap_fte,'Ready FTE','Productive now','twr')}
+  ${kpi(sign(d.gap_fte),'Gap FTE','','rag-'+(d.gap_fte>0?'red':d.gap_fte>-1?'amber':'green'))}
+  ${kpi(d.inbound.length,'Open Requests','','rag-'+(d.inbound.length>0?'amber':'green'))}
+</div>
+${secTabs([
+  {label:'Skill Coverage',cls:'twr',html:tabSkills},
+  {label:'Charts',cls:'twr',html:tabCharts},
+  {label:'Tower Team',cls:'twr',html:tabTeam}
+],'twr-'+tid)}`;
+}
+
+// ── RESOURCES ─────────────────────────────────────────────────────────────────
+function renderResources(data) {
+  const human  = data.filter(r=>r.res_type==='Human');
+  const agents = data.filter(r=>r.res_type==='Agent');
+  const stars  = n => '★'.repeat(Math.max(0,n)) + '☆'.repeat(Math.max(0,5-n));
+  return `
+<div class="sec-header fact">
+  <h2>Resource Master</h2>
+  <p>${human.length} Human resources · ${agents.length} AI Agents · Factory PMO owns this sheet</p>
+</div>
+<div class="kpi-grid">
+  ${kpi(human.length,'Human Resources','Active','fact')}
+  ${kpi(agents.length,'AI Agents','Deployed / Dev','twr')}
+  ${kpi(data.filter(r=>r.status==='Active').length,'Active','Combined','fact')}
+  ${kpi(data.filter(r=>r.status==='Bench').length,'On Bench','Available','pod')}
+</div>
+
+<div class="block">
+  <div class="block-title fact" style="display:flex;justify-content:space-between;align-items:center">
+    Human Resources
+    <button class="btn btn-fact" style="font-size:10px;padding:3px 10px" onclick="openResModal(null,'Human')">+ Add Person</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>ID</th><th>Name</th><th>Level</th><th>DU</th><th>POD / Tower</th>
+      <th>Account</th><th>Primary Skill</th><th>Secondary</th>
+      <th>Prof.</th><th>Cert</th><th class="num">FTE</th>
+      <th>Skill Fit</th><th>Status</th><th>Notes</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${human.map(r=>`<tr>
+      <td style="color:var(--text2);font-size:10px;font-weight:600">${r.id}</td>
+      <td style="font-weight:600">${r.name}</td>
+      <td style="font-size:10px;color:var(--text2)">${r.career_level}</td>
+      <td style="font-size:10px;color:var(--text2)">${r.du}</td>
+      <td style="color:var(--pod-a);font-size:10px">${r.pod_tower}</td>
+      <td style="font-size:10px">${r.account}</td>
+      <td style="font-weight:600">${r.primary_skill}</td>
+      <td style="font-size:10px;color:var(--text2)">${r.secondary_skill}</td>
+      <td class="center" style="font-size:10px;color:var(--amber)">${stars(r.proficiency)}</td>
+      <td class="center"><span class="rag-pill ${r.cert==='Y'?'green':'red'}">${r.cert}</span></td>
+      <td class="num">${r.alloc_fte}</td>
+      <td class="num" style="font-size:10px">${(r.skill_fit*100).toFixed(0)}%</td>
+      <td><span class="rag-pill ${r.status==='Active'?'green':r.status==='Bench'?'amber':'red'}">${r.status}</span></td>
+      <td style="font-size:10px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.notes}</td>
+      <td><div class="row-actions">
+        <button class="row-btn edit" onclick="openResModal('${r.id}','Human')" title="Edit">✏</button>
+        <button class="row-btn del"  onclick="deleteRes('${r.id}')" title="Delete">✕</button>
+      </div></td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="block">
+  <div class="block-title twr" style="display:flex;justify-content:space-between;align-items:center">
+    AI Agents
+    <button class="btn btn-twr" style="font-size:10px;padding:3px 10px" onclick="openResModal(null,'Agent')">+ Add Agent</button>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>ID</th><th>Agent Name</th><th>Function</th><th>Tower</th>
+      <th>Primary Skill</th><th>Secondary</th><th>Maturity</th>
+      <th class="num">FTE Equiv</th><th>Status</th><th>Notes</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${agents.map(r=>`<tr>
+      <td style="color:var(--text2);font-size:10px;font-weight:600">${r.id}</td>
+      <td style="font-weight:600;color:var(--twr-a)">${r.name}</td>
+      <td style="font-size:10px;color:var(--text2)">${r.du}</td>
+      <td style="color:var(--twr-a);font-size:10px">${r.pod_tower}</td>
+      <td style="font-weight:600">${r.primary_skill}</td>
+      <td style="font-size:10px;color:var(--text2)">${r.secondary_skill}</td>
+      <td><span class="badge agent">L${r.proficiency-1} Maturity</span></td>
+      <td class="num">${r.alloc_fte}</td>
+      <td><span class="rag-pill ${r.status==='Active'?'green':'amber'}">${r.status}</span></td>
+      <td style="font-size:10px;color:var(--text2)">${r.notes}</td>
+      <td><div class="row-actions">
+        <button class="row-btn edit" onclick="openResModal('${r.id}','Agent')" title="Edit">✏</button>
+        <button class="row-btn del"  onclick="deleteRes('${r.id}')" title="Delete">✕</button>
+      </div></td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>
+</div>`;
+}
+
+async function deleteRes(rid) {
+  if (!confirm(`Delete resource ${rid}? This cannot be undone.`)) return;
+  try {
+    await apiFetch(`/api/resources/${rid}`, 'DELETE');
+    toast(`${rid} removed`);
+    await nav(STATE.sec);
+  } catch(e) { toast('Delete failed', true); }
+}
+
+// ── REBALANCING BOARD ─────────────────────────────────────────────────────────
+function renderRebalancing(data) {
+  return `
+<div class="sec-header fact">
+  <h2>Rebalancing Board</h2>
+  <p>Factory Lead approval required for all resource moves · POD/Tower Leads propose · Factory Lead decides</p>
+</div>
+<div class="btn-row">
+  <button class="btn btn-fact" onclick="openRebModal()">+ Propose Rebalancing</button>
+</div>
+<div class="block">
+  <div class="block-title fact">Decision Log</div>
+  ${data.length===0?'<div class="block-body" style="color:var(--text2)">No rebalancing decisions yet.</div>':
+    `<div class="tbl-wrap"><table>
+      <thead><tr><th>Ref</th><th>Resource / Module</th><th>From</th><th>To</th><th class="num">FTE</th><th>Reason</th><th>Proposed By</th><th>Approved By</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>${data.map(r=>`<tr>
+        <td style="color:var(--text2);font-size:10px">${r.ref||'#'+r.id}</td>
+        <td style="font-weight:600">${r.resource}</td>
+        <td style="color:var(--dl-a);font-size:10px">${r.from_sheet}</td>
+        <td style="color:var(--pod-a);font-size:10px">${r.to_sheet}</td>
+        <td class="num">${r.fte}</td>
+        <td style="font-size:10px;color:var(--text2)">${r.reason}</td>
+        <td style="font-size:10px">${r.proposed_by}</td>
+        <td style="font-size:10px">${r.approved_by||'—'}</td>
+        <td style="font-size:10px">${r.decision_date||'—'}</td>
+        <td><span class="rag-pill ${r.status==='Approved'?'green':r.status==='Proposed'?'amber':'red'}" style="cursor:pointer" onclick="approveReb(${r.id},this)">${r.status}</span></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`}
+</div>`;
+}
+
+async function approveReb(id, el) {
+  const cur = el.textContent.trim();
+  if(cur==='Proposed') {
+    const updated = await apiFetch(`/api/rebalancing/${id}`,'PATCH',{status:'Approved',approved_by:'Factory Lead',decision_date:new Date().toISOString().slice(0,10)});
+    el.textContent=updated.status; el.className=`rag-pill green`;
+    toast('Rebalancing approved');
+  }
+}
+
+// ── E2E FLOW ──────────────────────────────────────────────────────────────────
+function renderFlow() {
+  return `
+<div class="sec-header fact">
+  <h2>End-to-End Process Flow</h2>
+  <p>AMS Team AMS Factory — Complete Demand → Delivery → Improvement Cycle</p>
+</div>
+<div class="block">
+  <div class="block-title fact">Factory Operating Model — E2E Flow</div>
+  <div class="block-body" style="overflow-x:auto">
+    <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto">
+      <defs>
+        <marker id="fa" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#546E7A"/>
+        </marker>
+        <marker id="fa-r" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#EF4444"/>
+        </marker>
+      </defs>
+      <!-- ROWS -->
+      <!-- Row 1: Demand -->
+      <text x="10" y="58" fill="#94A3B8" font-size="9" font-family="Segoe UI">DEMAND</text>
+      <rect x="60" y="40" width="120" height="36" rx="5" fill="#3B0A10" stroke="#EF4444" stroke-width="1.5"/>
+      <text x="120" y="60" text-anchor="middle" fill="#EF4444" font-size="9" font-weight="bold" font-family="Segoe UI">Client Account</text>
+      <text x="120" y="71" text-anchor="middle" fill="#FCA5A5" font-size="8" font-family="Segoe UI">Ticket / CR / Ad-hoc</text>
+      <line x1="180" y1="58" x2="220" y2="58" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <rect x="220" y="40" width="120" height="36" rx="5" fill="#3B0A10" stroke="#EF4444" stroke-width="1.5"/>
+      <text x="280" y="60" text-anchor="middle" fill="#EF4444" font-size="9" font-weight="bold" font-family="Segoe UI">Delivery Lead</text>
+      <text x="280" y="71" text-anchor="middle" fill="#FCA5A5" font-size="8" font-family="Segoe UI">Log Demand · Route</text>
+      <line x1="340" y1="58" x2="380" y2="58" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <!-- Row 2: POD/Tower -->
+      <text x="10" y="145" fill="#94A3B8" font-size="9" font-family="Segoe UI">POD/TOWER</text>
+      <rect x="380" y="35" width="120" height="46" rx="5" fill="#0A2E5C" stroke="#0288D1" stroke-width="1.5"/>
+      <text x="440" y="55" text-anchor="middle" fill="#0288D1" font-size="9" font-weight="bold" font-family="Segoe UI">POD Lead</text>
+      <text x="440" y="67" text-anchor="middle" fill="#81D4FA" font-size="8" font-family="Segoe UI">Module Assign</text>
+      <text x="440" y="77" text-anchor="middle" fill="#81D4FA" font-size="8" font-family="Segoe UI">Skill Match</text>
+      <line x1="500" y1="58" x2="540" y2="58" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <rect x="540" y="35" width="120" height="46" rx="5" fill="#1A0D3D" stroke="#7B1FA2" stroke-width="1.5"/>
+      <text x="600" y="55" text-anchor="middle" fill="#CE93D8" font-size="9" font-weight="bold" font-family="Segoe UI">Tower Lead</text>
+      <text x="600" y="67" text-anchor="middle" fill="#CE93D8" font-size="8" font-family="Segoe UI">Tech Assignment</text>
+      <text x="600" y="77" text-anchor="middle" fill="#CE93D8" font-size="8" font-family="Segoe UI">Skill Supply</text>
+      <line x1="660" y1="58" x2="700" y2="58" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <!-- Row 3: Delivery -->
+      <text x="10" y="215" fill="#94A3B8" font-size="9" font-family="Segoe UI">DELIVERY</text>
+      <rect x="700" y="35" width="130" height="46" rx="5" fill="#0F2942" stroke="#00D4FF" stroke-width="1.5"/>
+      <text x="765" y="55" text-anchor="middle" fill="#00D4FF" font-size="9" font-weight="bold" font-family="Segoe UI">Resource Delivers</text>
+      <text x="765" y="67" text-anchor="middle" fill="#90CAF9" font-size="8" font-family="Segoe UI">Incident / SR / CR</text>
+      <text x="765" y="77" text-anchor="middle" fill="#90CAF9" font-size="8" font-family="Segoe UI">SLA Met · Closed</text>
+
+      <!-- Second layer -->
+      <!-- Capacity Check -->
+      <text x="10" y="170" fill="#94A3B8" font-size="9" font-family="Segoe UI">CAPACITY</text>
+      <rect x="60" y="155" width="140" height="46" rx="5" fill="#0A2E5C" stroke="#0288D1" stroke-width="1.5"/>
+      <text x="130" y="175" text-anchor="middle" fill="#0288D1" font-size="9" font-weight="bold" font-family="Segoe UI">Capacity Check</text>
+      <text x="130" y="187" text-anchor="middle" fill="#81D4FA" font-size="8" font-family="Segoe UI">Demand vs Supply</text>
+      <text x="130" y="197" text-anchor="middle" fill="#81D4FA" font-size="8" font-family="Segoe UI">GAP → Red/Amber/Green</text>
+      <line x1="200" y1="178" x2="250" y2="178" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <!-- Resource Request -->
+      <rect x="250" y="155" width="140" height="46" rx="5" fill="#3B0A10" stroke="#EF4444" stroke-width="1.5"/>
+      <text x="320" y="175" text-anchor="middle" fill="#EF4444" font-size="9" font-weight="bold" font-family="Segoe UI">Resource Request</text>
+      <text x="320" y="187" text-anchor="middle" fill="#FCA5A5" font-size="8" font-family="Segoe UI">Raise if Gap &gt; 0.5 FTE</text>
+      <text x="320" y="197" text-anchor="middle" fill="#FCA5A5" font-size="8" font-family="Segoe UI">Route to POD/Tower</text>
+      <line x1="390" y1="178" x2="430" y2="178" stroke="#EF4444" stroke-width="1" marker-end="url(#fa-r)"/>
+      <!-- Rebalancing -->
+      <rect x="430" y="155" width="140" height="46" rx="5" fill="#1B3A1B" stroke="#4CAF50" stroke-width="1.5"/>
+      <text x="500" y="175" text-anchor="middle" fill="#81C784" font-size="9" font-weight="bold" font-family="Segoe UI">Rebalancing</text>
+      <text x="500" y="187" text-anchor="middle" fill="#A5D6A7" font-size="8" font-family="Segoe UI">Factory Lead Approves</text>
+      <text x="500" y="197" text-anchor="middle" fill="#A5D6A7" font-size="8" font-family="Segoe UI">Move/Rotate/Hire</text>
+      <line x1="570" y1="178" x2="610" y2="178" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <!-- AI Automation -->
+      <rect x="610" y="155" width="140" height="46" rx="5" fill="#1A0D3D" stroke="#7B1FA2" stroke-width="1.5"/>
+      <text x="680" y="175" text-anchor="middle" fill="#CE93D8" font-size="9" font-weight="bold" font-family="Segoe UI">AI Triage &amp; Automation</text>
+      <text x="680" y="187" text-anchor="middle" fill="#E1BEE7" font-size="8" font-family="Segoe UI">Reduce Demand FTE</text>
+      <text x="680" y="197" text-anchor="middle" fill="#E1BEE7" font-size="8" font-family="Segoe UI">L0-L4 Agent Maturity</text>
+
+      <!-- Reporting/Governance row -->
+      <text x="10" y="265" fill="#94A3B8" font-size="9" font-family="Segoe UI">GOVERNANCE</text>
+      <rect x="60" y="250" width="160" height="46" rx="5" fill="#0F2942" stroke="#00D4FF" stroke-width="1.5"/>
+      <text x="140" y="270" text-anchor="middle" fill="#00D4FF" font-size="9" font-weight="bold" font-family="Segoe UI">Factory Dashboard</text>
+      <text x="140" y="282" text-anchor="middle" fill="#90CAF9" font-size="8" font-family="Segoe UI">Factory Lead · Weekly Review</text>
+      <text x="140" y="292" text-anchor="middle" fill="#90CAF9" font-size="8" font-family="Segoe UI">KPI · RAG · Actions</text>
+      <line x1="220" y1="273" x2="260" y2="273" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <rect x="260" y="250" width="160" height="46" rx="5" fill="#0F2942" stroke="#00D4FF" stroke-width="1.5"/>
+      <text x="340" y="270" text-anchor="middle" fill="#00D4FF" font-size="9" font-weight="bold" font-family="Segoe UI">Monthly Reporting</text>
+      <text x="340" y="282" text-anchor="middle" fill="#90CAF9" font-size="8" font-family="Segoe UI">Capacity · Utilisation · AI%</text>
+      <text x="340" y="292" text-anchor="middle" fill="#90CAF9" font-size="8" font-family="Segoe UI">Stakeholder Pack</text>
+      <line x1="420" y1="273" x2="460" y2="273" stroke="#546E7A" stroke-width="1" marker-end="url(#fa)"/>
+      <rect x="460" y="250" width="160" height="46" rx="5" fill="#1B3A1B" stroke="#4CAF50" stroke-width="1.5"/>
+      <text x="540" y="270" text-anchor="middle" fill="#81C784" font-size="9" font-weight="bold" font-family="Segoe UI">Continuous Improvement</text>
+      <text x="540" y="282" text-anchor="middle" fill="#A5D6A7" font-size="8" font-family="Segoe UI">RCA · Knowledge · Reuse</text>
+      <text x="540" y="292" text-anchor="middle" fill="#A5D6A7" font-size="8" font-family="Segoe UI">AI Maturity Uplift</text>
+
+      <!-- Vertical connectors -->
+      <line x1="280" y1="76" x2="280" y2="155" stroke="#546E7A" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="440" y1="81" x2="440" y2="155" stroke="#546E7A" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="600" y1="81" x2="680" y2="155" stroke="#546E7A" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="130" y1="201" x2="130" y2="250" stroke="#546E7A" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="500" y1="201" x2="500" y2="250" stroke="#546E7A" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- Timeline row -->
+      <text x="10" y="360" fill="#94A3B8" font-size="9" font-family="Segoe UI">TIMELINE</text>
+      <rect x="60" y="340" width="860" height="8" rx="4" fill="#1E3251"/>
+      ${[['Aug-26','Pilot Go-Live','#EF4444',60],['Mar-27','Pilot Scale','#F59E0B',220],['Apr-27','Full Scale','#0288D1',385],['Sep-27','20% AI Prod','#7B1FA2',550],['Dec-27','FY27 Close','#0288D1',720],['2029+','45-50% AI','#CE93D8',850]].map(([d,l,c,x])=>`
+        <circle cx="${x+60}" cy="344" r="5" fill="${c}"/>
+        <text x="${x+60}" y="360" text-anchor="middle" fill="${c}" font-size="8" font-family="Segoe UI" font-weight="bold">${d}</text>
+        <text x="${x+60}" y="371" text-anchor="middle" fill="#94A3B8" font-size="7" font-family="Segoe UI">${l}</text>
+      `).join('')}
+
+      <!-- Legend -->
+      <rect x="60" y="395" width="760" height="70" rx="5" fill="#111E32" stroke="#1E3251" stroke-width="1"/>
+      <text x="80" y="412" fill="#00D4FF" font-size="9" font-weight="bold" font-family="Segoe UI">HOW IT WORKS</text>
+      <text x="80" y="426" fill="#94A3B8" font-size="8" font-family="Segoe UI">1. Client raises ticket/CR → Delivery Lead logs demand in this app (DL sheet, Step 1)</text>
+      <text x="80" y="438" fill="#94A3B8" font-size="8" font-family="Segoe UI">2. App computes Demand FTE automatically → Gap highlighted in RED if capacity short</text>
+      <text x="80" y="450" fill="#94A3B8" font-size="8" font-family="Segoe UI">3. DL raises requirement → POD/Tower Lead receives in their view → Action/assign resource</text>
+      <text x="80" y="462" fill="#94A3B8" font-size="8" font-family="Segoe UI">4. Factory Lead sees all gaps on Command Centre → Approves rebalancing → AI reduces demand over time</text>
+    </svg>
+  </div>
+</div>
+<div class="info-grid">
+  <div class="info-card"><h4>Demand FTE Formula</h4><p style="font-size:10px;color:var(--text2)">(Inc×IncHrs + SR×SRHrs + CR×CRHrs + NT) × Complexity × (1-AI%) ÷ 160</p></div>
+  <div class="info-card"><h4>Capacity FTE Formula</h4><p style="font-size:10px;color:var(--text2)">Allocated FTE × Availability% × Skill Fit Factor</p></div>
+  <div class="info-card"><h4>GAP = Demand − Capacity</h4><p style="font-size:10px;color:var(--red)">Red: Gap &gt; 2 FTE  &nbsp;</p><p style="font-size:10px;color:var(--amber)">Amber: Gap 0-2  &nbsp;</p><p style="font-size:10px;color:var(--green)">Green: Surplus</p></div>
+  <div class="info-card"><h4>Resource Request Trigger</h4><p style="font-size:10px;color:var(--text2)">Gap ≥ 0.5 FTE for 2 consecutive months → Raise request</p></div>
+</div>`;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openReqModal(source, label) {
+  STATE.modal = {type:'req', source};
+  document.getElementById('modal-title').textContent = `Add Requirement — ${label}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row">
+      <div><label>Skill / Module</label><input id="m-skill" placeholder="e.g. SD/GTS/TM" autocomplete="off"></div>
+      <div><label>FTE Required</label><input id="m-fte" type="number" step="0.5" min="0" value="1.0"></div>
+    </div>
+    <div class="form-row">
+      <div><label>By Month</label><input id="m-month" placeholder="e.g. Jul-26" autocomplete="off"></div>
+      <div><label>Priority</label><select id="m-priority"><option>Medium</option><option>High</option><option>Critical</option><option>Low</option></select></div>
+    </div>
+    <div class="form-row">
+      <div><label>Route To (POD or Tower)</label><select id="m-route">
+        <option value="">— select —</option>
+        <optgroup label="POD Leads">
+          <option>POD_R2R</option><option>POD_OTC</option><option>POD_P2P</option>
+          <option>POD_MFG</option><option>POD_HCM</option><option>POD_EHS</option><option>POD_REPORTING</option>
+        </optgroup>
+        <optgroup label="Tower Leads">
+          <option>TWR_ABAP</option><option>TWR_BASIS</option><option>TWR_SECURITY</option>
+          <option>TWR_INTEGRATION</option><option>TWR_AUTOMATION</option>
+        </optgroup>
+      </select></div>
+      <div><label>Raised By</label><input id="m-by" placeholder="Your name" autocomplete="off"></div>
+    </div>
+    <div class="form-row full"><label>Notes</label><textarea id="m-notes" rows="2" placeholder="Additional context…"></textarea></div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function openResModal(rid, resType='Human') {
+  STATE.modal = {type:'res', rid};
+  const isEdit = !!rid;
+  // Find existing data if editing
+  const existing = isEdit && STATE.data
+    ? (Array.isArray(STATE.data) ? STATE.data.find(r=>r.id===rid) : null)
+    : null;
+  const v = (f,def='') => existing ? (existing[f]??def) : def;
+  const isAgent = (resType==='Agent' || (existing&&existing.res_type==='Agent'));
+  document.getElementById('modal-title').textContent = isEdit
+    ? `Edit ${isAgent?'Agent':'Person'} — ${rid}`
+    : `Add ${isAgent?'AI Agent':'Person'} to Resource Master`;
+  document.getElementById('modal').style.maxWidth = '640px';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row">
+      <div><label>Resource ID ${isEdit?'(read-only)':'(unique, e.g. R012 or AGT005)'}</label>
+        <input id="ri-id" value="${v('id')}" ${isEdit?'readonly style="opacity:.5"':''} placeholder="${isAgent?'AGT005':'R012'}" autocomplete="off"></div>
+      <div><label>Full Name</label>
+        <input id="ri-name" value="${v('name')}" placeholder="First Last" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Career Level</label>
+        <select id="ri-level">
+          ${['Analyst','Sr Analyst','Consultant','Sr Consultant','Manager','Sr Manager','Director','—'].map(l=>`<option${v('career_level','Analyst')===l?' selected':''}>${l}</option>`).join('')}
+        </select></div>
+      <div><label>Delivery Unit (DU)</label>
+        <select id="ri-du">
+          ${['DU-SAP','DU-Tech','DU-Cloud','Automation','—'].map(l=>`<option${v('du','DU-SAP')===l?' selected':''}>${l}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="form-row">
+      <div><label>POD / Tower Assignment</label>
+        <select id="ri-pod">
+          <optgroup label="POD Leads">
+            ${['POD_R2R','POD_OTC','POD_P2P','POD_MFG','POD_HCM','POD_EHS','POD_REPORTING'].map(p=>`<option${v('pod_tower')===p?' selected':''}>${p}</option>`).join('')}
+          </optgroup>
+          <optgroup label="Tower Leads">
+            ${['TWR_ABAP','TWR_BASIS','TWR_SECURITY','TWR_INTEGRATION','TWR_AUTOMATION'].map(t=>`<option${v('pod_tower')===t?' selected':''}>${t}</option>`).join('')}
+          </optgroup>
+        </select></div>
+      <div><label>Account</label>
+        <select id="ri-account">
+          ${['Account Alpha','Account Beta','Account Gamma','All','—'].map(a=>`<option${v('account','All')===a?' selected':''}>${a}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="form-row">
+      <div><label>Primary Skill</label>
+        <input id="ri-skill1" value="${v('primary_skill')}" placeholder="e.g. FI, ABAP OO, GRC AC" autocomplete="off"></div>
+      <div><label>Secondary Skill</label>
+        <input id="ri-skill2" value="${v('secondary_skill')}" placeholder="e.g. CO, Fiori/UI5" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Proficiency (1–5 stars)</label>
+        <select id="ri-prof">
+          ${[1,2,3,4,5].map(n=>`<option value="${n}"${v('proficiency',3)==n?' selected':''}>${'★'.repeat(n)} (${n})</option>`).join('')}
+        </select></div>
+      <div><label>Certified?</label>
+        <select id="ri-cert">
+          <option value="Y"${v('cert','N')==='Y'?' selected':''}>Yes</option>
+          <option value="N"${v('cert','N')==='N'?' selected':''}>No</option>
+        </select></div>
+    </div>
+    <div class="form-row">
+      <div><label>Alloc FTE</label>
+        <input id="ri-fte" type="number" step="0.1" min="0" max="2" value="${v('alloc_fte',1.0)}"></div>
+      <div><label>Skill Fit (0.0–1.0)</label>
+        <input id="ri-fit" type="number" step="0.05" min="0" max="1" value="${v('skill_fit',0.80)}"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Status</label>
+        <select id="ri-status">
+          ${['Active','Bench','Shadow','Onboarding','Offboarded'].map(s=>`<option${v('status','Active')===s?' selected':''}>${s}</option>`).join('')}
+        </select></div>
+      <div><label>Resource Type</label>
+        <select id="ri-type">
+          <option value="Human"${!isAgent?' selected':''}>Human</option>
+          <option value="Agent"${isAgent?' selected':''}>Agent</option>
+        </select></div>
+    </div>
+    <div class="form-row full"><label>Notes / Role Description</label>
+      <textarea id="ri-notes" rows="2" placeholder="e.g. POD Lead R2R, Junior analyst onboarded Jul-26…">${v('notes')}</textarea></div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function openRebModal() {
+  STATE.modal = {type:'reb'};
+  document.getElementById('modal-title').textContent = 'Propose Rebalancing Decision';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row">
+      <div><label>Reference</label><input id="r-ref" placeholder="e.g. REB-001" autocomplete="off"></div>
+      <div><label>Resource / Module</label><input id="r-res" placeholder="Name or module" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div><label>From (POD/Tower/Account)</label><input id="r-from" autocomplete="off"></div>
+      <div><label>To (POD/Tower/Account)</label><input id="r-to" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div><label>FTE</label><input id="r-fte" type="number" step="0.5" min="0" value="1.0"></div>
+      <div><label>Proposed By</label><input id="r-by" autocomplete="off"></div>
+    </div>
+    <div class="form-row full"><label>Business Justification</label><textarea id="r-reason" rows="2" placeholder="Why is this move needed?"></textarea></div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+async function submitModal() {
+  if (!STATE.modal) return;
+  try {
+    if (STATE.modal.type === 'req') {
+      await apiFetch('/api/requirements', 'POST', {
+        source: STATE.modal.source,
+        skill_module: document.getElementById('m-skill').value,
+        fte_req: parseFloat(document.getElementById('m-fte').value)||0,
+        by_month: document.getElementById('m-month').value,
+        priority: document.getElementById('m-priority').value,
+        route_to: document.getElementById('m-route').value,
+        raised_by: document.getElementById('m-by').value,
+        notes: document.getElementById('m-notes').value,
+      });
+      toast('Requirement logged');
+
+    } else if (STATE.modal.type === 'reb') {
+      await apiFetch('/api/rebalancing', 'POST', {
+        ref: document.getElementById('r-ref').value,
+        resource: document.getElementById('r-res').value,
+        from_sheet: document.getElementById('r-from').value,
+        to_sheet: document.getElementById('r-to').value,
+        fte: parseFloat(document.getElementById('r-fte').value)||0,
+        proposed_by: document.getElementById('r-by').value,
+        reason: document.getElementById('r-reason').value,
+      });
+      toast('Rebalancing proposed');
+
+    } else if (STATE.modal.type === 'settings') {
+      const keys = ['contracted_fte','ai_target_pct','gap_red_threshold','gap_amber_threshold','pilot_start','pilot_end','scale_start'];
+      const payload = {};
+      keys.forEach(k => { const el = document.getElementById('cfg-'+k); if (el) payload[k] = el.value; });
+      await apiFetch('/api/settings','PATCH', payload);
+      toast('Settings saved');
+
+    } else if (STATE.modal.type === 'res') {
+      const g = id => document.getElementById(id);
+      const rid = STATE.modal.rid;
+      const body = {
+        name:            g('ri-name').value.trim(),
+        career_level:    g('ri-level').value,
+        du:              g('ri-du').value,
+        pod_tower:       g('ri-pod').value,
+        account:         g('ri-account').value,
+        primary_skill:   g('ri-skill1').value.trim(),
+        secondary_skill: g('ri-skill2').value.trim(),
+        proficiency:     parseInt(g('ri-prof').value)||3,
+        cert:            g('ri-cert').value,
+        alloc_fte:       parseFloat(g('ri-fte').value)||1.0,
+        skill_fit:       parseFloat(g('ri-fit').value)||0.8,
+        status:          g('ri-status').value,
+        res_type:        g('ri-type').value,
+        notes:           g('ri-notes').value.trim(),
+      };
+      if (rid) {
+        // Edit existing
+        await apiFetch(`/api/resources/${rid}`, 'PATCH', body);
+        toast(`${rid} updated`);
+      } else {
+        // Add new — id is required
+        const newId = g('ri-id').value.trim().toUpperCase();
+        if (!newId) { toast('Resource ID is required', true); return; }
+        await apiFetch('/api/resources', 'POST', {...body, id: newId});
+        toast(`${newId} added to Resource Master`);
+      }
+    }
+    closeModal();
+    await nav(STATE.sec);
+  } catch(e) {
+    const msg = e.message || 'Submit failed';
+    toast(msg.includes('409') ? 'ID already exists — choose a different ID' : 'Submit failed: ' + msg, true);
+  }
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-bg')) return;
+  document.getElementById('modal-bg').classList.remove('open');
+  STATE.modal = null;
+}
+
+// ── MODULE / SKILL MANAGEMENT ────────────────────────────────────────────────
+async function addDLModule(aid) {
+  const name = prompt('New module name (e.g. "FI/CO Reporting" or "ABAP Extension"):');
+  if (!name || !name.trim()) return;
+  try {
+    await apiFetch('/api/dl_modules','POST',{account:aid, module:name.trim()});
+    toast('Module added — update demand fields to set volumes');
+    await nav(STATE.sec);
+  } catch(e) { toast('Failed: '+e.message, true); }
+}
+
+async function deleteDLModule(mid) {
+  if (!confirm('Remove this module and all its demand data?')) return;
+  try {
+    const r = await fetch(`/api/module/${mid}`, {method:'DELETE', headers:{'Content-Type':'application/json'}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('Module removed'); await nav(STATE.sec);
+  } catch(e) { toast('Failed: '+e.message, true); }
+}
+
+async function addPODModule(pid) {
+  const name = prompt('New module name (e.g. "GL Extensions" or "New Development"):');
+  if (!name || !name.trim()) return;
+  try {
+    await apiFetch('/api/pod_modules','POST',{pod:pid, module:name.trim()});
+    toast('Module added'); await nav(STATE.sec);
+  } catch(e) { toast('Failed: '+e.message, true); }
+}
+
+async function deletePODModule(mid) {
+  if (!confirm('Remove this POD module?')) return;
+  try {
+    const r = await fetch(`/api/pod_module/${mid}`, {method:'DELETE', headers:{'Content-Type':'application/json'}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('Module removed'); await nav(STATE.sec);
+  } catch(e) { toast('Failed: '+e.message, true); }
+}
+
+async function addTowerSkill(tid) {
+  const name = prompt('New skill name (e.g. "S/4HANA Migration" or "CDS Views"):');
+  if (!name || !name.trim()) return;
+  const tgt = parseFloat(prompt('Target FTE for this skill:', '5') || '5') || 5;
+  try {
+    await apiFetch('/api/tower_skills','POST',{tower:tid, skill:name.trim(), target_fte:tgt});
+    toast('Skill added'); await nav(STATE.sec);
+  } catch(e) { toast('Failed: '+e.message, true); }
+}
+
+async function deleteTowerSkill(sid) {
+  if (!confirm('Remove this skill row?')) return;
+  try {
+    const r = await fetch(`/api/tower_skill/${sid}`, {method:'DELETE', headers:{'Content-Type':'application/json'}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('Skill removed'); await nav(STATE.sec);
+  } catch(e) { toast('Failed: '+e.message, true); }
+}
+
+// ── MASTER SETTINGS ───────────────────────────────────────────────────────────
+async function openSettings() {
+  let data = {};
+  try { data = await apiFetch('/api/settings'); } catch(e) {}
+  const v = (k, def) => data[k]?.value ?? def;
+  STATE.modal = {type:'settings'};
+  document.getElementById('modal-title').textContent = 'Master Settings';
+  document.getElementById('modal').style.maxWidth = '560px';
+  document.getElementById('modal-body').innerHTML = `
+    <p style="font-size:11px;color:var(--text2);margin-bottom:12px">These values feed into KPIs and calculations. Changes take effect on next page load.</p>
+    <div class="form-row">
+      <div><label>Contracted FTE (commercial commitment)</label>
+        <input id="cfg-contracted_fte" type="number" step="0.5" value="${v('contracted_fte','199.5')}"></div>
+      <div><label>AI Productivity Target (decimal, e.g. 0.20 = 20%)</label>
+        <input id="cfg-ai_target_pct" type="number" step="0.01" max="1" value="${v('ai_target_pct','0.20')}"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Gap RED threshold (FTE — above this = Red)</label>
+        <input id="cfg-gap_red_threshold" type="number" step="0.5" value="${v('gap_red_threshold','2.0')}"></div>
+      <div><label>Gap AMBER threshold (FTE — above this = Amber)</label>
+        <input id="cfg-gap_amber_threshold" type="number" step="0.5" value="${v('gap_amber_threshold','0.0')}"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Pilot Go-Live Date</label>
+        <input id="cfg-pilot_start" type="date" value="${v('pilot_start','2026-08-01')}"></div>
+      <div><label>Pilot End Date</label>
+        <input id="cfg-pilot_end" type="date" value="${v('pilot_end','2027-03-31')}"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Full Scale Start Date</label>
+        <input id="cfg-scale_start" type="date" value="${v('scale_start','2027-04-01')}"></div>
+      <div></div>
+    </div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+// ── NAV ID HELPERS ────────────────────────────────────────────────────────────
+const dlNavId = id => ({'DL_ACCOUNT_A':'account-a','DL_ACCOUNT_B':'account-b','DL_ACCOUNT_C':'account-c'}[id]||'factory');
+const podNavId= id => id.replace('POD_','pod-').toLowerCase().replace('_','-');
+const twrNavId= id => id.replace('TWR_','twr-').toLowerCase().replace('_','-');
+const dlLabel = id => ({'DL_ACCOUNT_A':'Account Alpha','DL_ACCOUNT_B':'Account Beta','DL_ACCOUNT_C':'Account Gamma'}[id]||id);
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function tick() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+setInterval(tick, 1000); tick();
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+nav('factory');
+</script>
+</body>
+</html>
